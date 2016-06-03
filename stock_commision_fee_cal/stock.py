@@ -93,7 +93,7 @@ def breakeven(gross_amount, price_per_share, share_lot, action):
     #print "gross_amount breakeven = ", new_gross_amount
     #print "price_per_share", price_per_share
     
-    return price_per_sharepython
+    return price_per_share
     
 
 """
