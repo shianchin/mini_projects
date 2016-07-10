@@ -1,6 +1,6 @@
 # Stock sell/buy/breakeven price calculator
 
-Usage:
+##Usage:
 1. Run stock.py
 2. Enter 1st input: {sell | buy | breakeven} 
 3. Enter 2nd input: {Share price in RM} 
@@ -11,12 +11,13 @@ http://www.bursamalaysia.com/market/securities/equities/trading/transaction-cost
 
 
 Logic of breakeven code:
+
 1. run buy algorithm
 2. get total amount due
 3. set to total amount due in sell algorithm
 4. unknown new gross amount <- find this
 
-
+```
 -----------In math term:-----------
 t_a_d = new_g_a - t_f
 Rearranging:
@@ -71,3 +72,4 @@ total_fee
 total_fee - (gross_amount)*(clearing_fee_rate)*(gst_rate + 1) = (brokerage_amount)*(clearing_fee_rate + 1)*(gst_rate + 1) + (contract_stamp)*((clearing_fee_rate)*(gst_rate + 1) + 1)
 
 ....i give up. See above math terms instead of actual variables.
+```
