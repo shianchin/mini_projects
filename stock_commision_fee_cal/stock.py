@@ -1,21 +1,29 @@
-import sys
+#!/usr/bin/env python
+
+#**********************************************************************
+# Project           : Stock commision fee calculator
+#
+# File name         : stock.py
+#
+# Author            : Cheang Shian Chin
+#
+# Date created      : 20 Nov 2015
+#
+# Purpose           : Calculate stock sell/buy fees and breakeven price.
+#
+# Revision History  :
+#
+# Date           Author       Ref    Revision
+# 10-Jul-2016    shianchin    2      Prompt user input, set max stamp duty 
+#                                    and clearing fee.
+# 20-Nov-2015    shianchin    1      Initial creation.
+#
+#**********************************************************************
 
 def main():
-    if len(sys.argv) != 4:
-        print 'HOW TO USE THIS: '
-        print '     For Linux:'
-        print '     ./stock.py {sell | buy | breakeven} {Share price in RM} {Amount of share in Lot}'
-        print '     For Windows:'
-        print '     python stock.py {sell | buy | breakeven} {Share price in RM} {Amount of share in Lot}'
-        sys.exit(1)
-
-    action = sys.argv[1]
-    price_per_share = sys.argv[2]
-    share_lot = sys.argv[3]
-    
-    print "Your first variable is:", action
-    print "Your second variable is:", price_per_share
-    print "Your third variable is:", share_lot
+    action = raw_input('{sell | buy | breakeven}: ')
+    price_per_share = raw_input('Price per share in RM: ')
+    share_lot = raw_input('How many lots ( 1 lot = 100 shares): ')
     
     price_per_share = float(price_per_share)   # in RM
     share_lot = int(share_lot)         # 1 lot = 100 shares
@@ -37,13 +45,8 @@ def main():
     elif (action == 'breakeven'):
         price_per_share = breakeven(gross_amount, price_per_share, share_lot, action)
         print "\n    Breakeven price   = RM ", '{:>9}'.format('{:,.6f}'.format(price_per_share))
-    
-    
-    
 
 
-    
-        
 def buy(gross_amount, action):    
     total_fee = fee_calculate(gross_amount, action)
     total_amount_due = gross_amount + total_fee
@@ -59,17 +62,18 @@ def sell(gross_amount, action):
 def breakeven(gross_amount, price_per_share, share_lot, action):
     total_amount_due = buy(gross_amount, action)
     
+    #TODO: Might want to consolidate these constants with fee_calculate()
     brokerage_rate = 0.42/100
     clearing_fee_rate = 0.03/100
     gst_rate = 6.0/100
             
     contract_stamp = int(total_amount_due / 1000) + 1    # might have problem when gross amount is near boundary of thousand 
     
-    if (contract_stamp > 10):
-        contract_stamp = 10
+    if (contract_stamp > 200):
+        contract_stamp = 200    #Max stamp duty = RM200
 
         
-    if (total_amount_due < 2873.78):
+    if (total_amount_due < 2873.78):    #For anything less than RM2873.78, min brokerage fee is RM12
         brokerage_amount = 12.00
         total_fee = (((brokerage_amount)*(clearing_fee_rate + 1)*(gst_rate + 1) 
                         + (contract_stamp)*((clearing_fee_rate)*(gst_rate + 1) + 1)
@@ -94,74 +98,8 @@ def breakeven(gross_amount, price_per_share, share_lot, action):
     #print "price_per_share", price_per_share
     
     return price_per_share
-    
-
-"""
-Logic of breakeven code:
-1. run buy code
-2. get total amount due
-3. set to total amount due in sell code
-4. unknown new gross amount <- find this
 
 
------------In math term:-----------
-t_a_d = new_g_a - t_f
-Rearranging:
-new_g_a = t_a_d + t_f       # equation 1
-
-t_f = b_a + c_s + c_f + gst                     # total_fee = sum of all fees
-    = b_a + c_s + c_f + (b_a + c_f)(0.06)       # assuming gst_rate = 6%
-    = b_a(1 + 0.06) + c_s + c_f(1 + 0.06)
-    = (b_a + c_f)(1.06) + c_s
-    = [b_a + (new_g_a + b_a + c_s)(0.0003)](1.06) + c_s     # assuming clearing_fee_rate = 0.03%
-    = [b_a + new_g_a(0.0003) + b_a(0.0003) + c_s(0.0003)](1.06) + c_s
-    = [b_a(1 + 0.0003) + (new_g_a + c_s)(0.0003)](1.06) + c_s
-    = b_a(1.0003)(1.06) + new_g_a(0.0003)(1.06) + c_s(0.0003)(1.06) + c_s       
-
-Rearranging:    
-t_f - new_g_a(0.0003)(1.06) = b_a(1.0003)(1.06) + c_s[(0.0003)(1.06) + 1]       # equation 2
-
-For L.H.S., substitute equation 1 into equation 2:
-t_f - new_g_a(0.0003)(1.06) = t_f - (t_a_d + t_f)(0.0003)(1.06)
-                        = t_f - t_f(0.0003)(1.06) - t_a_d(0.0003)(1.06)
-                        = t_f[1 - (0.0003)(1.06)] - t_a_d(0.0003)(1.06)
-Therefore,
-t_f[1 - (0.0003)(1.06)] - t_a_d(0.0003)(1.06) = b_a(1.0003)(1.06) + c_s[(0.0003)(1.06) + 1]
-t_f(0.999682) - t_a_d(0.000318) = b_a(1.060318) + c_s(1.000318)
-t_f(0.999682) = b_a(1.060318) + c_s(1.000318) + t_a_d(0.000318)
-t_f = [b_a(1.060318) + c_s(1.000318) + t_a_d(0.000318)] / (0.999682)    #Use this to calculate total_fee if brokerage_amount = 12
-
-if b_a > 12:
-Substitue b_a = (new_g_a)(b_r)
-              = (t_a_d + t_f)(b_r)
-Thus,
-t_f(0.999682) = (t_a_d + t_f)(b_r)(1.060318) + c_s(1.000318) + t_a_d(0.000318)
-t_f(0.999682) - (t_f)(b_r)(1.060318) = (t_a_d)(b_r)(1.060318) + c_s(1.000318) + t_a_d(0.000318)
-t_f[0.999682 - (b_r)(1.060318)] = t_a_d[(b_r)(1.060318) + 0.000318] + c_s(1.000318) 
-t_f = {t_a_d[(b_r)(1.060318) + 0.000318] + c_s(1.000318)} / [0.999682 - (b_r)(1.060318)]    #Use this to calculate total_fee if brokerage_amount > 12
-
-
------------In term of actual variables:-----------
-total_amount_due = gross_amount - total_fee
-Thus, gross_amount = total_amount_due + total_fee
-
-total_fee
-= brokerage_amount + contract_stamp + clearing_fee + gst
-= brokerage_amount + contract_stamp + clearing_fee + (brokerage_amount + clearing_fee) * gst_rate
-= (brokerage_amount)(gst_rate + 1) + contract_stamp + (clearing_fee)(gst_rate + 1)
-= (brokerage_amount + clearing_fee)(gst_rate + 1) + contract_stamp
-= (brokerage_amount + (gross_amount + brokerage_amount + contract_stamp)*clearing_fee_rate)(gst_rate + 1) + contract_stamp
-= (brokerage_amount + (gross_amount)(clearing_fee_rate) + (brokerage_amount)(clearing_fee_rate) + (contract_stamp)(clearing_fee_rate))(gst_rate + 1) + contract_stamp
-= ((brokerage_amount)*(clearing_fee_rate + 1) + ((gross_amount) + (contract_stamp))*(clearing_fee_rate))*(gst_rate + 1) + contract_stamp
-= (brokerage_amount)*(clearing_fee_rate + 1)*(gst_rate + 1) + (gross_amount)*(clearing_fee_rate)*(gst_rate + 1) + (contract_stamp)*(clearing_fee_rate)*(gst_rate + 1) + contract_stamp
-
-total_fee - (gross_amount)*(clearing_fee_rate)*(gst_rate + 1) = (brokerage_amount)*(clearing_fee_rate + 1)*(gst_rate + 1) + (contract_stamp)*((clearing_fee_rate)*(gst_rate + 1) + 1)
-
-....i give up. See above math terms instead of actual variables.
-
-"""
-
-    
 def fee_calculate(gross_amount, action):
     brokerage_rate = 0.42/100
     clearing_fee_rate = 0.03/100
@@ -174,10 +112,14 @@ def fee_calculate(gross_amount, action):
     
     contract_stamp = int(gross_amount / 1000) + 1     
     
-    if (contract_stamp > 10):
-        contract_stamp = 10
-        
+    if (contract_stamp > 200):
+        contract_stamp = 200    #Max stamp duty = RM200
+
     clearing_fee = (gross_amount + brokerage_amount + contract_stamp) * clearing_fee_rate
+
+    if (clearing_fee > 1000):
+        clearing_fee = 1000     #Max clearing fee = RM1000
+    
     gst = (brokerage_amount + clearing_fee) * gst_rate
     
     total_fee = brokerage_amount + contract_stamp + clearing_fee + gst
