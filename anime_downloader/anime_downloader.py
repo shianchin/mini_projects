@@ -14,6 +14,8 @@
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 16-Jul-2016    shianchin    3      Combined regex of various shows into one.
+#                                    Changed to use urllib2 to get html.
 # 15-Jul-2016    shianchin    2      Created functions to parse showpage.html to
 #                                    find dl link, func to download torrent file,
 #                                    and use regex to find wanted shows.
@@ -26,22 +28,22 @@
 import bs4
 import re
 import requests
+import urllib2
 import os.path
 
 def main():
     MAX_PAGE = 5
-    page = 1
-    while page <= MAX_PAGE:
-        print 'Page',page,'of',MAX_PAGE
-        res = requests.get('http://www.36dm.com/'+str(page)+'.html')
-        res.raise_for_status()
-        playFile = open('homepage.html', 'wb')
-        for chunk in res.iter_content(100000):
-            playFile.write(chunk)
-        playFile.close()
-    
-        find_match()
-        page+=1 # go to next page
+    for page in range(MAX_PAGE):
+        print 'Page',(page+1),'of',MAX_PAGE
+        homepage = urllib2.urlopen('http://www.36dm.com/'+str(page+1)+'.html')
+                
+        #print res.read().decode('utf-8')
+        if homepage.getcode() == 200:
+            find_match(homepage)
+        else:
+            print 'Error '+homepage.getcode()
+        
+        
 
     #print exampleFile.read().decode('utf-8')
 
@@ -61,18 +63,15 @@ def main():
     #print len(elems)
     #print elems[0]
 
-def find_match():
-    exampleFile = open('homepage.html')
-    exampleSoup = bs4.BeautifulSoup(exampleFile.read(), "html.parser")
-    exampleFile.close()
+def find_match(homepage):
+    homepageSoup = bs4.BeautifulSoup(homepage.read(), "html.parser")
 
-    tag = exampleSoup.td
+    tag = homepageSoup.td
     count = 0
     fail_count = 0
     title_list = []
-    #titleFile = open('title.txt', 'wb')
 
-    for link in exampleSoup.find_all('td'):
+    for link in homepageSoup.find_all('td'):
         #print link.get()
         if link.get('style') == 'text-align:left;':
             count+=1
@@ -81,12 +80,21 @@ def find_match():
             title = link.contents[1].string
             title_list.append(title)
 
+            shows_re = [
+                        u"(【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\])",
+                        u"(【极影字幕社】 ★ 星之梦 planetarian)",
+                        u"(\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿)",
+                        u"(【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\])"
+                       ] # be sure to escape any special char
+            combined_re = "(" + ")|(".join(shows_re) + ")"
+            #print combined_re
             #regexes = [re.compile(ur'【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\]')]
             #               re.compile(ur'【极影字幕社】 ★ 星之梦 planetarian')]
             #wantedTitle = [u'【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】[Re：從零開始的異世界生活]']
             #               u'【极影字幕社】 ★ 星之梦 planetarian']
-            match = re.search(ur'【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\]', title)
-            
+            #match = re.search(ur'(【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\])|(【极影字幕社】 ★ 星之梦 planetarian)|(\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿)|(【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\])', title)
+            match = re.search(combined_re, title)
+
             try:
                 if match:
                     #print match.group()
@@ -107,33 +115,25 @@ def find_match():
 
             #print len(link.contents)
 
- 
     print 'count = ',count
     print 'fail count = ',fail_count
     print 'title_list = ',len(title_list)
 
 def find_dl_link(show_pageURL):
     #link to show page
-    res = requests.get(show_pageURL)
-    res.raise_for_status()
-    playFile = open('showpage.html', 'wb')
-    for chunk in res.iter_content(100000):
-        playFile.write(chunk)
-    playFile.close()
-
-    exampleFile = open('showpage.html')
-    exampleSoup = bs4.BeautifulSoup(exampleFile.read(), "html.parser")
-    exampleFile.close()
+    showpage = urllib2.urlopen(show_pageURL)
+    showpageSoup = bs4.BeautifulSoup(showpage.read(), "html.parser")
+    
     #exampleSoup.prettify("gbk")
     #for link in exampleSoup.find_all('p', class_="original download"):
 
     dl_list = []
-    for link in exampleSoup.select('#download'):
+    for link in showpageSoup.select('#download'):
         dl_list.append(link.get('href'))
         #print len(dl_list)
         #print(link.get('href'))
     
-    return dl_list.pop()
+    return dl_list.pop()    #TODO : use list?
 
 def download_torrent(dl_link, filename):
     #link to actual torrent file
