@@ -27,9 +27,7 @@
 
 
 from bs4 import BeautifulSoup
-#import bs4
 import re
-import requests
 import urllib2
 import os.path
 
