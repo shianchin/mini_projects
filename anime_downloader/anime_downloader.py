@@ -14,6 +14,8 @@
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 16-Jul-2016    shianchin    4      Created a log class. Got rid of unnecessary
+#                                    try-except. More cleanups.
 # 16-Jul-2016    shianchin    3      Combined regex of various shows into one.
 #                                    Changed to use urllib2 to get html.
 # 15-Jul-2016    shianchin    2      Created functions to parse showpage.html to
@@ -24,145 +26,123 @@
 #**********************************************************************
 
 
-#from bs4 import BeautifulSoup
-import bs4
+from bs4 import BeautifulSoup
+#import bs4
 import re
 import requests
 import urllib2
 import os.path
 
 def main():
+    # This is a list of regexes to be used as pattern recognition.
+    shows_re = [
+                ur"(【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\])",
+                ur"(【极影字幕社】 ★ 星之梦 planetarian)",
+                ur"(\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿)",
+                ur"(【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\])"
+               ] # be sure to escape any special char
+    dmLog = Log('www.36dm.com')    
     MAX_PAGE = 5
     for page in range(MAX_PAGE):
         print 'Page',(page+1),'of',MAX_PAGE
-        homepage = urllib2.urlopen('http://www.36dm.com/'+str(page+1)+'.html')
-                
-        #print res.read().decode('utf-8')
-        if homepage.getcode() == 200:
-            find_match(homepage)
-        else:
-            print 'Error '+homepage.getcode()
         
-        
+        try:
+            homepage = urllib2.urlopen('http://www.36dm.com/'+str(page+1)+'.html')
+            find_match(homepage, shows_re, dmLog)
+        except urllib2.HTTPError:
+            print 'HTTP Error 404: Not Found'
+    
+    print '\n  ----Summary----'
+    print 'Titles searched =',dmLog.search_count
+    
+    if len(dmLog.exist_list) > 0:
+        print 'Existing files:'
+        print '\n'.join(dmLog.exist_list)
 
-    #print exampleFile.read().decode('utf-8')
+    if len(dmLog.dl_list) > 0:
+        print 'NEW files:'
+        print '\n'.join(dmLog.dl_list)
+    else:
+        print 'No new release.'
 
-    testWord = 'an example word:cat!!'
-    match = re.search(r'word:\w\w\w', testWord)
-    print match.group()
 
-    #print title_list
-    #for abc in exampleSoup.find_all('a'):
-    #    print abc.get('href')
-
-    #webpage = exampleSoup.prettify("gbk")
-    #print webpage
-
-    #elems = exampleSoup.select('#download')
-    #print type(elems)
-    #print len(elems)
-    #print elems[0]
-
-def find_match(homepage):
-    homepageSoup = bs4.BeautifulSoup(homepage.read(), "html.parser")
-
-    tag = homepageSoup.td
+def find_match(homepage, shows_re, dmLog):
+    homepageSoup = BeautifulSoup(homepage.read(), "html.parser")
+    combined_re = "(" + ")|(".join(shows_re) + ")"
     count = 0
-    fail_count = 0
-    title_list = []
 
-    for link in homepageSoup.find_all('td'):
-        #print link.get()
-        if link.get('style') == 'text-align:left;':
-            count+=1
-            #print type(tag)
-            #str(link.contents[1]).decode('utf-8')
-            title = link.contents[1].string
-            title_list.append(title)
+    for td_tag in homepageSoup.find_all('td'):
+        #print td_tag.get()
+        if td_tag.get('style') == 'text-align:left;':
+            count += 1
+            title = td_tag.contents[1].string
 
-            shows_re = [
-                        u"(【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\])",
-                        u"(【极影字幕社】 ★ 星之梦 planetarian)",
-                        u"(\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿)",
-                        u"(【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\])"
-                       ] # be sure to escape any special char
-            combined_re = "(" + ")|(".join(shows_re) + ")"
-            #print combined_re
-            #regexes = [re.compile(ur'【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\]')]
-            #               re.compile(ur'【极影字幕社】 ★ 星之梦 planetarian')]
-            #wantedTitle = [u'【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】[Re：從零開始的異世界生活]']
-            #               u'【极影字幕社】 ★ 星之梦 planetarian']
-            #match = re.search(ur'(【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\])|(【极影字幕社】 ★ 星之梦 planetarian)|(\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿)|(【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\])', title)
             match = re.search(combined_re, title)
 
-            try:
-                if match:
-                    #print match.group()
-                    unicode_title = unicode(title)
-                    print 'matched title: '+unicode_title
-                    print type(unicode_title)
-            
-                    show_pageURL = 'http://www.36dm.com/'+link.contents[1].get('href')
-                    print show_pageURL
-                    dl_link = find_dl_link(show_pageURL)
-                    torr_URL = 'http://www.36dm.com/'+dl_link
-                    print torr_URL
-                    download_torrent(torr_URL, unicode_title)
-                    #titleFile.write(str(title).decode('utf-8'))
-            except:
-                fail_count+=1
-                pass
+            if match:
+                unicode_title = unicode(title).strip()
+                print 'Found: '+unicode_title
+        
+                show_pageURL = 'http://www.36dm.com/'+td_tag.contents[1].get('href')
+                partial_dl_link = find_dl_link(show_pageURL)
+                torr_URL = 'http://www.36dm.com/'+partial_dl_link
+                download_torrent(torr_URL, unicode_title, dmLog)
 
-            #print len(link.contents)
+    dmLog.searched(count)
 
-    print 'count = ',count
-    print 'fail count = ',fail_count
-    print 'title_list = ',len(title_list)
 
 def find_dl_link(show_pageURL):
     #link to show page
     showpage = urllib2.urlopen(show_pageURL)
-    showpageSoup = bs4.BeautifulSoup(showpage.read(), "html.parser")
-    
-    #exampleSoup.prettify("gbk")
-    #for link in exampleSoup.find_all('p', class_="original download"):
-
+    showpageSoup = BeautifulSoup(showpage.read(), "html.parser")
     dl_list = []
-    for link in showpageSoup.select('#download'):
-        dl_list.append(link.get('href'))
-        #print len(dl_list)
-        #print(link.get('href'))
     
-    return dl_list.pop()    #TODO : use list?
-
-def download_torrent(dl_link, filename):
-    #link to actual torrent file
-    torrent_link = requests.get(dl_link)
-
-    if torrent_link.status_code == requests.codes.ok:
-        print 'Link OK'
+    for dl_attrs in showpageSoup.select('#download'):
+        dl_list.append(dl_attrs.get('href'))
+    
+    #Should find 2 identical download links
+    if (len(dl_list) == 2) and (dl_list[0]==dl_list[1]):
+        return dl_list.pop()
     else:
-        print 'Link ERROR'
-    torrent_link.raise_for_status()
-    
+        print 'Error: Possible website layout change'
 
-    torrent_filename = filename.strip().replace("/","- -")+'.torrent'   #replace any forward slash in filename
-    print 'torrent name: '+torrent_filename
-    print type(torrent_filename)
 
-    if not os.path.isfile(torrent_filename):
+#This function will download a torrent file given link
+def download_torrent(torr_URL, filename, torr_log):
+    #replace any forward slash in filename
+    torr_filename = filename.replace("/","- -")+'.torrent'
+
+    if not os.path.isfile(torr_filename):
         # file NOT exist
         try:
-            torrent_file = open(torrent_filename, 'wb')
-            for chunk in torrent_link.iter_content(100000):
-                torrent_file.write(chunk)
-            torrent_file.close()
+            torr_data = urllib2.urlopen(torr_URL).read()
+            with open(torr_filename, 'wb') as torr_f:
+                torr_f.write(torr_data)
+            torr_log.downloaded('TRUE', filename)
             print 'Torrent DOWNLOADED'
         except:
-            print 'Torrent file not created.'
+            print 'Error: Torrent file not created'
 
     else:
+        torr_log.downloaded('FALSE', filename)
         print 'Torrent file already existed.'
+
+class Log:
+    def __init__(self, name):
+        self.name = name
+        self.search_count = 0
+        self.dl_list = []
+        self.exist_list = []
+
+    def searched(self, count):
+        self.search_count += count
+
+    def downloaded(self, status, filename):
+        if status == 'TRUE':
+            self.dl_list.append(filename)
+        elif status == 'FALSE':
+            self.exist_list.append(filename)
+
 
 if __name__ == '__main__':
     main()
