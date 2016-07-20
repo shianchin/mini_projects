@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#**********************************************************************
+#----------------------------------------------------------------------
 # Project           : Anime Downloader
 #
 # File name         : anime_downloader.py
@@ -11,28 +11,14 @@
 #
 # Purpose           : Download anime torrent files from fansub.
 #
-# Revision History  :
-#
-# Date           Author       Ref    Revision
-# 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
-#                                    Use requests module.
-# 16-Jul-2016    shianchin    4      Create a log class. Get rid of unnecessary
-#                                    try-except. More cleanups.
-# 16-Jul-2016    shianchin    3      Combine regex of various shows into one.
-#                                    Change to use urllib2 to get html.
-# 15-Jul-2016    shianchin    2      Create functions to parse showpage.html to
-#                                    find dl link, func to download torrent file,
-#                                    and use regex to find wanted shows.
-# 11-Jul-2016    shianchin    1      Initial creation.
-#
-#**********************************************************************
+#----------------------------------------------------------------------
 
 
 from bs4 import BeautifulSoup
+import argparse
 import os.path
 import re
 import requests
-import sys
 
 def main():
     # This is a lists of regexes to be used as pattern recognition.
@@ -43,51 +29,67 @@ def main():
                  ur"\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿",
                  ur"【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\]",
                  ur"\[澄空学园&amp;雪飘工作室\]\[7月新番] Rewrite 第\d\d话 MP4 720p",
-                 ] 
+                 ]
     DokiShows_re = [
                    ur"New Game! - \d\d \(1280x720 h264 AAC\)"
                    ]
-    DM_MAX_PAGE = 7
+    DM_MAX_PAGE = 10
     DOKI_MAX_PAGE = 5
     ### end of lists
-    
+
     # if dryRun, only find matches but don't download them
-    if (len(sys.argv) > 1) and (sys.argv[1] == '-d'):
-        isDryRun = 'True'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dry", help="Dry Run: find all the matches without downloading them.",
+                        action ="store_true", default = 0)
+    args = parser.parse_args()
+    if args.dry:
+        isDryRun = 1
         print 'DryRun is ON'
     else:
         isDryRun = 0
 
-
     ### Download from www.36dm.com
-    DMLog = Log('www.36dm.com')    #log name is used as checks. Update all if changed.
+    DMLog = Log('www.36dm.com')
     print '\n'+DMLog.name
 
-    if len(DMshows_re) > 0:
-        for page in range(1,DM_MAX_PAGE+1):
+    if len(DMshows_re):
+        stop = 0
+        page = 1
+        while ( not stop ):
             print 'Page',page,'of',DM_MAX_PAGE
             homepage = requests.get('http://www.36dm.com/'+str(page)+'.html')
 
             if homepage.status_code == requests.codes.ok:
-                find_match(homepage.text.encode('utf-8'), DMshows_re, DMLog, isDryRun)
-    
+                stop = find_match_DM(homepage.text.encode('utf-8'), DMshows_re, DMLog, isDryRun)
+            if page == DM_MAX_PAGE:
+                stop = 1    # Force stop after reaching max page
+            else:
+                page += 1   # Go to next page
+
     ### Download from doki.co
-    DokiLog = Log('Doki Fansubs')   #log name is used as checks. Update all if changed.
+    DokiLog = Log('Doki Fansubs')
     print '\n'+DokiLog.name
 
-    if len(DokiShows_re) > 0:
-        for page in range(1,DOKI_MAX_PAGE+1):
+    if len(DokiShows_re):
+        stop = 0
+        page = 1
+        while ( not stop ):
             print 'Page',page,'of',DOKI_MAX_PAGE
             homepage = requests.get('https://doki.co/page/'+str(page)+'/')
-            
+
             if homepage.status_code == requests.codes.ok:
-                find_match(homepage.text.encode('utf-8'), DokiShows_re, DokiLog, isDryRun)
+                stop = find_match_Doki(homepage.text.encode('utf-8'), DokiShows_re, DokiLog, isDryRun)
+            if page == DOKI_MAX_PAGE:
+                stop = 1    # Force stop after reaching max page
+            else:
+                page += 1   # Go to next page
+
 
     ### Report
     print '\n  ----Summary----'
     print 'Titles searched =',(DokiLog.search_count+DMLog.search_count)
     print 'Titles matched  =',(DokiLog.match_count+DMLog.match_count)
-    
+
     if len(DokiLog.exist_list) > 0 or len(DMLog.exist_list) > 0:
         print '\nExisting files:'
         if len(DMLog.exist_list) > 0:
@@ -97,7 +99,7 @@ def main():
     else:
         pass
         # do nothing
-        
+
     if len(DokiLog.dl_list) > 0 or len(DMLog.dl_list) > 0:
         print '\nNEW files:'
         if len(DMLog.dl_list) > 0:
@@ -108,43 +110,60 @@ def main():
         print '>>> No new release.'
 
 
-def find_match(homepageHTML, shows_re_list, logObj, isDryRun):
+def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
     homepageSoup = BeautifulSoup(homepageHTML, "html.parser")
     combined_re = "(" + ")|(".join(shows_re_list) + ")"
     count = 0
     match_num = 0
-    
-    if logObj.name == 'Doki Fansubs':
-        for p_tag in homepageSoup.find_all('p'):
-            if p_tag.a and (p_tag.a.contents[0] == 'Torrent'):
-                count += 1
-                match = re.search(combined_re, p_tag.a.get('href'))
-                if match:
-                    match_num += 1
-                    torr_URL = p_tag.a.get('href')
-                    title = re.search(ur'\[Doki\].+mkv', torr_URL).group()  
-                    # extract title from link
-                    print 'Found: '+title
-                    if not isDryRun:
-                        download_torrent(torr_URL, title, logObj)
+    fileExist = 0
 
-    elif logObj.name == 'www.36dm.com':
-        for td_tag in homepageSoup.find_all('td'):
-            if td_tag.get('style') == 'text-align:left;':
-                count += 1
-                title = td_tag.contents[1].string
-                match = re.search(combined_re, title)
-                if match:
-                    match_num += 1
-                    unicode_title = unicode(title).strip()
-                    print 'Found: '+unicode_title
-                    show_pageURL = 'http://www.36dm.com/'+td_tag.contents[1].get('href')
-                    partial_dl_link = find_dl_link(show_pageURL)
-                    if partial_dl_link and not isDryRun:
-                        torr_URL = 'http://www.36dm.com/'+partial_dl_link
-                        download_torrent(torr_URL, unicode_title, logObj)
+    for p_tag in homepageSoup.find_all('p'):
+        if p_tag.a and (p_tag.a.contents[0] == 'Torrent'):
+            count += 1
+            match = re.search(combined_re, p_tag.a.get('href'))
+            if match:
+                match_num += 1
+                torr_URL = p_tag.a.get('href')
+                title = re.search(ur'\[Doki\].+mkv', torr_URL).group()
+                # extract title from link
+                print 'Found: '+title
+                if not isDryRun:
+                    fileExist = download_torrent(torr_URL, title, logObj)
+        if fileExist:
+            logObj.searched(count, match_num)
+            return fileExist    # break out from for-loop, force stop
 
     logObj.searched(count, match_num)
+    return fileExist    # return 0
+
+
+def find_match_DM(homepageHTML, shows_re_list, logObj, isDryRun):
+    homepageSoup = BeautifulSoup(homepageHTML, "html.parser")
+    combined_re = "(" + ")|(".join(shows_re_list) + ")"
+    count = 0
+    match_num = 0
+    fileExist = 0
+
+    for td_tag in homepageSoup.find_all('td'):
+        if td_tag.get('style') == 'text-align:left;':
+            count += 1
+            title = td_tag.contents[1].string
+            match = re.search(combined_re, title)
+            if match:
+                match_num += 1
+                unicode_title = unicode(title).strip()
+                print 'Found: '+unicode_title
+                show_pageURL = 'http://www.36dm.com/'+td_tag.contents[1].get('href')
+                partial_dl_link = find_dl_link(show_pageURL)
+                if partial_dl_link and not isDryRun:
+                    torr_URL = 'http://www.36dm.com/'+partial_dl_link
+                    fileExist = download_torrent(torr_URL, unicode_title, logObj)
+                    if fileExist:
+                        logObj.searched(count, match_num)
+                        return fileExist    # break out from for-loop, force stop
+
+    logObj.searched(count, match_num)
+    return fileExist    # return 0
 
 
 # Specific to www.36dm.com
@@ -153,10 +172,10 @@ def find_dl_link(show_pageURL):
     showpageHTML = requests.get(show_pageURL).text.encode('utf-8')
     showpageSoup = BeautifulSoup(showpageHTML, "html.parser")
     dl_list = []
-    
+
     for dl_attrs in showpageSoup.select('#download'):
         dl_list.append(dl_attrs.get('href'))
-    
+
     #Should find 2 identical download links
     if (len(dl_list) == 2) and (dl_list[0]==dl_list[1]):
         retVal = dl_list.pop()
@@ -173,21 +192,24 @@ def download_torrent(torr_URL, filename, logObj):
     #append .torrent extension
     torr_filename = filename.replace("/","- -")+'.torrent'
 
-    if not os.path.isfile(torr_filename):
+    if not os.path.isfile(r'C:\Users\user\Downloads\\'+torr_filename):
         # file NOT exist
         fixedURL = torr_URL.replace(" ","%20")  # fix URL with white space
-        
+
         r = requests.get(fixedURL)
-        with open(torr_filename, 'wb') as torr_f:
+        with open(r'C:\Users\user\Downloads\\'+torr_filename, 'wb') as torr_f:
             for chunk in r.iter_content(10000):
                 torr_f.write(chunk)
-        
+
         logObj.downloaded('TRUE', filename)
         print 'Torrent DOWNLOADED'
+        fileExist = 0
 
     else:
         logObj.downloaded('FALSE', filename)
         print 'Torrent file already exist.'
+        fileExist = 1
+    return fileExist
 
 
 class Log:
@@ -211,3 +233,21 @@ class Log:
 
 if __name__ == '__main__':
     main()
+
+#----------------------------------------------------------------------
+# Revision History  :
+#
+# Date           Author       Ref    Revision
+# 20-Jul-2016    shianchin    6      Stop searching once find existing files.
+# 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
+#                                    Use requests module.
+# 16-Jul-2016    shianchin    4      Create a log class. Get rid of unnecessary
+#                                    try-except. More cleanups.
+# 16-Jul-2016    shianchin    3      Combine regex of various shows into one.
+#                                    Change to use urllib2 to get html.
+# 15-Jul-2016    shianchin    2      Create functions to parse showpage.html to
+#                                    find dl link, func to download torrent file,
+#                                    and use regex to find wanted shows.
+# 11-Jul-2016    shianchin    1      Initial creation.
+#
+#----------------------------------------------------------------------
