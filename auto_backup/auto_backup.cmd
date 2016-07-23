@@ -1,6 +1,6 @@
 @echo off
 
-IF EXIST "F:\Backup\NUL" (
+IF EXIST "F:\Backup\" (
     IF EXIST "C:\Users\user\" (
     robocopy "C:\Users\user\Documents" "F:\Backup\Documents" /MIR /DCOPY:T /xj /np /tee /log:backup_log.txt
     robocopy "C:\Users\user\Pictures"  "F:\Backup\Pictures"  /MIR /DCOPY:T /xj /np /tee /log+:backup_log.txt

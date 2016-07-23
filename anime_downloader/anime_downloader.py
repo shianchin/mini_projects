@@ -84,30 +84,8 @@ def main():
             else:
                 page += 1   # Go to next page
 
-
-    ### Report
-    print '\n  ----Summary----'
-    print 'Titles searched =',(DokiLog.search_count+DMLog.search_count)
-    print 'Titles matched  =',(DokiLog.match_count+DMLog.match_count)
-
-    if len(DokiLog.exist_list) > 0 or len(DMLog.exist_list) > 0:
-        print '\nExisting files:'
-        if len(DMLog.exist_list) > 0:
-            print '\n'.join(DMLog.exist_list)
-        if len(DokiLog.exist_list) > 0:
-            print '\n'.join(DokiLog.exist_list)
-    else:
-        pass
-        # do nothing
-
-    if len(DokiLog.dl_list) > 0 or len(DMLog.dl_list) > 0:
-        print '\nNEW files:'
-        if len(DMLog.dl_list) > 0:
-            print '\n'.join(DMLog.dl_list)
-        if len(DokiLog.dl_list) > 0:
-            print '\n'.join(DokiLog.dl_list)
-    else:
-        print '>>> No new release.'
+    ### Output summary report
+    report(DokiLog, DMLog)
 
 
 def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
@@ -184,6 +162,31 @@ def find_dl_link(show_pageURL):
         retVal = 0
 
     return retVal
+
+
+def report(DokiLog, DMLog):
+    print '\n  ----Summary----'
+    print 'Titles searched =',(DokiLog.search_count+DMLog.search_count)
+    print 'Titles matched  =',(DokiLog.match_count+DMLog.match_count)
+
+    if len(DokiLog.exist_list) > 0 or len(DMLog.exist_list) > 0:
+        print '\nExisting files:'
+        if len(DMLog.exist_list) > 0:
+            print '\n'.join(DMLog.exist_list)
+        if len(DokiLog.exist_list) > 0:
+            print '\n'.join(DokiLog.exist_list)
+    else:
+        pass
+        # do nothing
+
+    if len(DokiLog.dl_list) > 0 or len(DMLog.dl_list) > 0:
+        print '\nNEW files:'
+        if len(DMLog.dl_list) > 0:
+            print '\n'.join(DMLog.dl_list)
+        if len(DokiLog.dl_list) > 0:
+            print '\n'.join(DokiLog.dl_list)
+    else:
+        print '>>> No new release.'
 
 
 # This function will download a torrent file given link
