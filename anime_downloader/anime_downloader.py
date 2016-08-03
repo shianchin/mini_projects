@@ -39,7 +39,7 @@ def main():
 
     # if dryRun, only find matches but don't download them
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--dry", help="Dry Run: find all the matches without downloading them.",
+    parser.add_argument("-d", "--dry", help="Perform a dry run - find all the matches without downloading them.",
                         action ="store_true", default = 0)
     args = parser.parse_args()
     if args.dry:
@@ -48,11 +48,14 @@ def main():
     else:
         isDryRun = 0
 
+
     ### Download from www.36dm.com
     DMLog = Log('www.36dm.com')
     print ('\n'+DMLog.name)
 
     if len(DMshows_re):
+        combined_re = "(" + ")|(".join(DMshows_re) + ")"
+        reObj = re.compile(combined_re)
         stop = 0
         page = 1
         while ( not stop ):
@@ -60,7 +63,7 @@ def main():
             homepage = requests.get('http://www.36dm.com/'+str(page)+'.html')
 
             if homepage.status_code == requests.codes.ok:
-                stop = find_match_DM(homepage.text.encode('utf-8'), DMshows_re, DMLog, isDryRun)
+                stop = findMatchDm(homepage.text.encode('utf-8'), reObj, DMLog, isDryRun)
             if page == DM_MAX_PAGE:
                 stop = 1    # Force stop after reaching max page
             else:
@@ -71,6 +74,8 @@ def main():
     print ('\n'+DokiLog.name)
 
     if len(DokiShows_re):
+        combined_re = "(" + ")|(".join(DokiShows_re) + ")"
+        reObj = re.compile(combined_re)
         stop = 0
         page = 1
         while ( not stop ):
@@ -78,7 +83,7 @@ def main():
             homepage = requests.get('https://doki.co/page/'+str(page)+'/')
 
             if homepage.status_code == requests.codes.ok:
-                stop = find_match_Doki(homepage.text.encode('utf-8'), DokiShows_re, DokiLog, isDryRun)
+                stop = findMatchDoki(homepage.text.encode('utf-8'), reObj, DokiLog, isDryRun)
             if page == DOKI_MAX_PAGE:
                 stop = 1    # Force stop after reaching max page
             else:
@@ -88,9 +93,8 @@ def main():
     report(DokiLog, DMLog)
 
 
-def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
+def findMatchDoki(homepageHTML, shows_reObj, logObj, isDryRun):
     homepageSoup = BeautifulSoup(homepageHTML, "html.parser")
-    combined_re = "(" + ")|(".join(shows_re_list) + ")"
     count = 0
     match_num = 0
     fileExist = 0
@@ -98,7 +102,7 @@ def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
     for p_tag in homepageSoup.find_all('p'):
         if p_tag.a and (p_tag.a.contents[0] == 'Torrent'):
             count += 1
-            match = re.search(combined_re, p_tag.a.get('href'))
+            match = shows_reObj.search(p_tag.a.get('href'))
             if match:
                 match_num += 1
                 torr_URL = p_tag.a.get('href')
@@ -106,18 +110,17 @@ def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
                 # extract title from link
                 print ('Found: '+title)
                 if not isDryRun:
-                    fileExist = download_torrent(torr_URL, title, logObj)
+                    fileExist = downloadTorrent(torr_URL, title, logObj)
         if fileExist:
-            logObj.searched(count, match_num)
-            return fileExist    # break out from for-loop, force stop
+            logObj.addToTotal(count, match_num)
+            return True    # break out from for-loop, force stop
 
-    logObj.searched(count, match_num)
-    return fileExist    # return 0
+    logObj.addToTotal(count, match_num)
+    return False
 
 
-def find_match_DM(homepageHTML, shows_re_list, logObj, isDryRun):
+def findMatchDm(homepageHTML, shows_reObj, logObj, isDryRun):
     homepageSoup = BeautifulSoup(homepageHTML, "html.parser")
-    combined_re = "(" + ")|(".join(shows_re_list) + ")"
     count = 0
     match_num = 0
     fileExist = 0
@@ -126,26 +129,26 @@ def find_match_DM(homepageHTML, shows_re_list, logObj, isDryRun):
         if td_tag.get('style') == 'text-align:left;':
             count += 1
             title = td_tag.contents[1].string
-            match = re.search(combined_re, title)
+            match = shows_reObj.search(title)
             if match:
                 match_num += 1
                 unicode_title = title.strip()
                 print ('Found: '+unicode_title)
                 show_pageURL = 'http://www.36dm.com/'+td_tag.contents[1].get('href')
-                partial_dl_link = find_dl_link(show_pageURL)
+                partial_dl_link = findDlLink(show_pageURL)
                 if partial_dl_link and not isDryRun:
                     torr_URL = 'http://www.36dm.com/'+partial_dl_link
-                    fileExist = download_torrent(torr_URL, unicode_title, logObj)
+                    fileExist = downloadTorrent(torr_URL, unicode_title, logObj)
                     if fileExist:
-                        logObj.searched(count, match_num)
-                        return fileExist    # break out from for-loop, force stop
+                        logObj.addToTotal(count, match_num)
+                        return True    # break out from for-loop, force stop
 
-    logObj.searched(count, match_num)
-    return fileExist    # return 0
+    logObj.addToTotal(count, match_num)
+    return False
 
 
 # Specific to www.36dm.com
-def find_dl_link(show_pageURL):
+def findDlLink(show_pageURL):
     #link to show page
     showpageHTML = requests.get(show_pageURL).text.encode('utf-8')
     showpageSoup = BeautifulSoup(showpageHTML, "html.parser")
@@ -190,7 +193,7 @@ def report(DokiLog, DMLog):
 
 
 # This function will download a torrent file given link
-def download_torrent(torr_URL, filename, logObj):
+def downloadTorrent(torr_URL, filename, logObj):
     #replace any forward slash in filename
     #append .torrent extension
     torr_filename = filename.replace("/","- -")+'.torrent'
@@ -223,7 +226,7 @@ class Log:
         self.dl_list = []
         self.exist_list = []
 
-    def searched(self, count, match):
+    def addToTotal(self, count, match):
         self.search_count += count
         self.match_count += match
 
@@ -241,7 +244,12 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+<<<<<<< HEAD
 # 03-Aug-2016    shianchin    7      Update to Python 3.5.2
+=======
+# 24-Jul-2016    shianchin    7      Create reObj before sending to findMatch.
+#                                    Change functions naming convention.
+>>>>>>> master
 # 20-Jul-2016    shianchin    6      Stop searching once find existing files.
 # 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
 #                                    Use requests module.
