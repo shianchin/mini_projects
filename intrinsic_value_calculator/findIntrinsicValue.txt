@@ -1,0 +1,30 @@
+Private Sub CommandButton1_Click()
+Dim DFCF_n As Double
+DFCF_n = 0
+Dim DFCF_last As Double
+DFCF_last = 0
+Dim FCF_0 As Double
+Dim short_fcf_growth_rate As Double
+Dim long_fcf_growth_rate As Double
+Dim discount_rate As Double
+Dim short_term As Integer
+Dim DPCF As Double
+Dim shares_outstanding As Double
+
+FCF_0 = Range("G3").Value
+short_fcf_growth_rate = Range("M3").Value
+long_fcf_growth_rate = Range("P3").Value
+discount_rate = Range("O3").Value
+short_term = Range("N3").Value
+shares_outstanding = Range("Q3").Value
+
+For n = 1 To short_term
+DFCF_n = DFCF_n + (FCF_0 * (1 + short_fcf_growth_rate) ^ n) / (1 + discount_rate) ^ n
+Next n
+
+DFCF_last = ((FCF_0 * (1 + short_fcf_growth_rate) ^ (short_term + 1)) / (1 + discount_rate) ^ (short_term + 1))
+
+DPCF = DFCF_last * ((1 + long_fcf_growth_rate) / (discount_rate - long_fcf_growth_rate))
+
+Range("S3").Value = (DFCF_n + DPCF) / shares_outstanding
+End Sub

@@ -244,12 +244,9 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
-<<<<<<< HEAD
-# 03-Aug-2016    shianchin    7      Update to Python 3.5.2
-=======
+# 03-Aug-2016    shianchin    8      Update to Python 3.5.2
 # 24-Jul-2016    shianchin    7      Create reObj before sending to findMatch.
 #                                    Change functions naming convention.
->>>>>>> master
 # 20-Jul-2016    shianchin    6      Stop searching once find existing files.
 # 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
 #                                    Use requests module.
