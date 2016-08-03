@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
-#**********************************************************************
+# -*- coding: utf-8 -*-
+#----------------------------------------------------------------------
 # Project           : Stock commision fee calculator
 #
 # File name         : stock.py
@@ -11,40 +11,32 @@
 #
 # Purpose           : Calculate stock sell/buy fees and breakeven price.
 #
-# Revision History  :
-#
-# Date           Author       Ref    Revision
-# 10-Jul-2016    shianchin    2      Prompt user input, set max stamp duty 
-#                                    and clearing fee.
-# 20-Nov-2015    shianchin    1      Initial creation.
-#
-#**********************************************************************
+#----------------------------------------------------------------------
+
 
 def main():
-    action = raw_input('{sell | buy | breakeven}: ')
-    price_per_share = raw_input('Price per share in RM: ')
-    share_lot = raw_input('How many lots ( 1 lot = 100 shares): ')
-    
-    price_per_share = float(price_per_share)   # in RM
-    share_lot = int(share_lot)         # 1 lot = 100 shares
-    
+    action = str(input('{sell | buy | breakeven}: '))
+    price_per_share = float(input('Price per share in RM: '))
+    share_lot = int(input('How many lots ( 1 lot = 100 shares): '))
+        
     gross_amount = price_per_share * share_lot * 100
     
-    
-    print "\n    Buy/Sell/Breakeven     ", '{:>9}'.format(action.upper())
-    print "    Quantity          =    ", '{:>9}'.format('{:,}'.format(share_lot * 100))
-    print "    Price             = RM ", '{:>9}'.format('{:,.6f}'.format(price_per_share))     
-    print "    Gross amount      = RM ", '{:>9}'.format('{:,.2f}'.format(gross_amount))
-    
+    print ("")
+    print ("    Buy/Sell/Breakeven     ", '{:>9}'.format(action.upper()))
+    print ("    Quantity          =    ", '{:>9}'.format('{:,}'.format(share_lot * 100)))
+    print ("    Price             = RM ", '{:>9}'.format('{:,.6f}'.format(price_per_share)))
+    print ("    Gross amount      = RM ", '{:>9}'.format('{:,.2f}'.format(gross_amount)))
+    print ("")
+
     if (action == 'buy'):
         total_amount_due = buy(gross_amount, action)
-        print "\n    TOTAL AMOUNT DUE  = RM ", '{:>9}'.format('{:,.2f}'.format(total_amount_due))
+        print ("    TOTAL AMOUNT DUE  = RM ", '{:>9}'.format('{:,.2f}'.format(total_amount_due)))
     elif (action == 'sell'):
         total_amount_due = sell(gross_amount, action)
-        print "\n    TOTAL AMOUNT DUE  = RM ", '{:>9}'.format('{:,.2f}'.format(total_amount_due))
+        print ("    TOTAL AMOUNT DUE  = RM ", '{:>9}'.format('{:,.2f}'.format(total_amount_due)))
     elif (action == 'breakeven'):
         price_per_share = breakeven(gross_amount, price_per_share, share_lot, action)
-        print "\n    Breakeven price   = RM ", '{:>9}'.format('{:,.6f}'.format(price_per_share))
+        print ("    Breakeven price   = RM ", '{:>9}'.format('{:,.6f}'.format(price_per_share)))
 
 
 def buy(gross_amount, action):    
@@ -133,17 +125,28 @@ def fee_calculate(gross_amount, action):
     elif (action == 'sell'):
         total_excl_gst = gross_amount - total_fee + gst
     
-    if (action != 'breakeven'):    
-        print "\nFees: "
-        print "    Brokerage rate    =    ", '{:>9}'.format('{:.2%}'.format(brokerage_rate))
-        print "    Brokerage amount  = RM ", '{:>9}'.format('{:,.2f}'.format(brokerage_amount))
-        print "    Contract stamp    = RM ", '{:>9}'.format('{:,.2f}'.format(contract_stamp))
-        print "    Clearing fees     = RM ", '{:>9}'.format('{:,.2f}'.format(clearing_fee))
-        print "    TOTAL (EXCL GST)  = RM ", '{:>9}'.format('{:,.2f}'.format(total_excl_gst))
-        print "    GST payable       = RM ", '{:>9}'.format('{:,.2f}'.format(gst))
-        print "    TOTAL FEE DUE     = RM ", '{:>9}'.format('{:,.2f}'.format(total_fee))    
+    if (action != 'breakeven'):
+        print ("Fees: ")
+        print ("    Brokerage rate    =    ", '{:>9}'.format('{:.2%}'.format(brokerage_rate)))
+        print ("    Brokerage amount  = RM ", '{:>9}'.format('{:,.2f}'.format(brokerage_amount)))
+        print ("    Contract stamp    = RM ", '{:>9}'.format('{:,.2f}'.format(contract_stamp)))
+        print ("    Clearing fees     = RM ", '{:>9}'.format('{:,.2f}'.format(clearing_fee)))
+        print ("    TOTAL (EXCL GST)  = RM ", '{:>9}'.format('{:,.2f}'.format(total_excl_gst)))
+        print ("    GST payable       = RM ", '{:>9}'.format('{:,.2f}'.format(gst)))
+        print ("    TOTAL FEE DUE     = RM ", '{:>9}'.format('{:,.2f}'.format(total_fee)))
     
     return total_fee    
 
 if __name__ == '__main__':
   main()
+
+#----------------------------------------------------------------------
+# Revision History  :
+#
+# Date           Author       Ref    Revision
+# 02-Aug-2016    shianchin    3      Update to Python 3.5
+# 10-Jul-2016    shianchin    2      Prompt user input, set max stamp duty 
+#                                    and clearing fee.
+# 20-Nov-2015    shianchin    1      Initial creation.
+#
+#----------------------------------------------------------------------

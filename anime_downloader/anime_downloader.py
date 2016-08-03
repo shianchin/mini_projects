@@ -24,16 +24,16 @@ def main():
     # This is a lists of regexes to be used as pattern recognition.
     # Be sure to escape any special char
     DMshows_re = [
-                 ur"【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\]",
-                 ur"【极影字幕社】 ★ 星之梦 planetarian",
-                 ur"\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿",
-                 ur"【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\]",
-                 ur"\[澄空学园&amp;雪飘工作室\]\[7月新番] Rewrite 第\d\d话 MP4 720p",
+                 r"【DHR動研&amp;輕之國度&amp;千夏&amp;KNA&amp;臉腫&amp;茉語星夢】\[Re：從零開始的異世界生活\]",
+                 r"【极影字幕社】 ★ 星之梦 planetarian",
+                 r"\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿",
+                 r"【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\]",
+                 r"\[澄空学园&amp;雪飘工作室\]\[7月新番] Rewrite 第\d\d话 MP4 720p",
                  ]
     DokiShows_re = [
-                   ur"New Game! - \d\d \(1280x720 h264 AAC\)"
+                   r"New Game! - \d\d \(1280x720 h264 AAC\)"
                    ]
-    DM_MAX_PAGE = 10
+    DM_MAX_PAGE = 20
     DOKI_MAX_PAGE = 5
     ### end of lists
 
@@ -44,19 +44,19 @@ def main():
     args = parser.parse_args()
     if args.dry:
         isDryRun = 1
-        print 'DryRun is ON'
+        print ('DryRun is ON')
     else:
         isDryRun = 0
 
     ### Download from www.36dm.com
     DMLog = Log('www.36dm.com')
-    print '\n'+DMLog.name
+    print ('\n'+DMLog.name)
 
     if len(DMshows_re):
         stop = 0
         page = 1
         while ( not stop ):
-            print 'Page',page,'of',DM_MAX_PAGE
+            print ('Page',page,'of',DM_MAX_PAGE)
             homepage = requests.get('http://www.36dm.com/'+str(page)+'.html')
 
             if homepage.status_code == requests.codes.ok:
@@ -68,13 +68,13 @@ def main():
 
     ### Download from doki.co
     DokiLog = Log('Doki Fansubs')
-    print '\n'+DokiLog.name
+    print ('\n'+DokiLog.name)
 
     if len(DokiShows_re):
         stop = 0
         page = 1
         while ( not stop ):
-            print 'Page',page,'of',DOKI_MAX_PAGE
+            print ('Page',page,'of',DOKI_MAX_PAGE)
             homepage = requests.get('https://doki.co/page/'+str(page)+'/')
 
             if homepage.status_code == requests.codes.ok:
@@ -102,9 +102,9 @@ def find_match_Doki(homepageHTML, shows_re_list, logObj, isDryRun):
             if match:
                 match_num += 1
                 torr_URL = p_tag.a.get('href')
-                title = re.search(ur'\[Doki\].+mkv', torr_URL).group()
+                title = re.search('\[Doki\].+mkv', torr_URL).group()
                 # extract title from link
-                print 'Found: '+title
+                print ('Found: '+title)
                 if not isDryRun:
                     fileExist = download_torrent(torr_URL, title, logObj)
         if fileExist:
@@ -129,8 +129,8 @@ def find_match_DM(homepageHTML, shows_re_list, logObj, isDryRun):
             match = re.search(combined_re, title)
             if match:
                 match_num += 1
-                unicode_title = unicode(title).strip()
-                print 'Found: '+unicode_title
+                unicode_title = title.strip()
+                print ('Found: '+unicode_title)
                 show_pageURL = 'http://www.36dm.com/'+td_tag.contents[1].get('href')
                 partial_dl_link = find_dl_link(show_pageURL)
                 if partial_dl_link and not isDryRun:
@@ -158,35 +158,35 @@ def find_dl_link(show_pageURL):
     if (len(dl_list) == 2) and (dl_list[0]==dl_list[1]):
         retVal = dl_list.pop()
     else:
-        print 'DL Link Error: Possible website layout change'
+        print ('DL Link Error: Possible website layout change')
         retVal = 0
 
     return retVal
 
 
 def report(DokiLog, DMLog):
-    print '\n  ----Summary----'
-    print 'Titles searched =',(DokiLog.search_count+DMLog.search_count)
-    print 'Titles matched  =',(DokiLog.match_count+DMLog.match_count)
+    print ('\n  ----Summary----')
+    print ('Titles searched =',(DokiLog.search_count+DMLog.search_count))
+    print ('Titles matched  =',(DokiLog.match_count+DMLog.match_count))
 
     if len(DokiLog.exist_list) > 0 or len(DMLog.exist_list) > 0:
-        print '\nExisting files:'
+        print ('\nExisting files:')
         if len(DMLog.exist_list) > 0:
-            print '\n'.join(DMLog.exist_list)
+            print ('\n'.join(DMLog.exist_list))
         if len(DokiLog.exist_list) > 0:
-            print '\n'.join(DokiLog.exist_list)
+            print ('\n'.join(DokiLog.exist_list))
     else:
         pass
         # do nothing
 
     if len(DokiLog.dl_list) > 0 or len(DMLog.dl_list) > 0:
-        print '\nNEW files:'
+        print ('\nNEW files:')
         if len(DMLog.dl_list) > 0:
-            print '\n'.join(DMLog.dl_list)
+            print ('\n'.join(DMLog.dl_list))
         if len(DokiLog.dl_list) > 0:
-            print '\n'.join(DokiLog.dl_list)
+            print ('\n'.join(DokiLog.dl_list))
     else:
-        print '>>> No new release.'
+        print ('>>> No new release.')
 
 
 # This function will download a torrent file given link
@@ -195,22 +195,22 @@ def download_torrent(torr_URL, filename, logObj):
     #append .torrent extension
     torr_filename = filename.replace("/","- -")+'.torrent'
 
-    if not os.path.isfile(r'C:\Users\user\Downloads\\'+torr_filename):
+    if not os.path.isfile(r'C:\Users\shianchin\Downloads\\'+torr_filename):
         # file NOT exist
         fixedURL = torr_URL.replace(" ","%20")  # fix URL with white space
 
         r = requests.get(fixedURL)
-        with open(r'C:\Users\user\Downloads\\'+torr_filename, 'wb') as torr_f:
+        with open(r'C:\Users\shianchin\Downloads\\'+torr_filename, 'wb') as torr_f:
             for chunk in r.iter_content(10000):
                 torr_f.write(chunk)
 
         logObj.downloaded('TRUE', filename)
-        print 'Torrent DOWNLOADED'
+        print ('Torrent DOWNLOADED')
         fileExist = 0
 
     else:
         logObj.downloaded('FALSE', filename)
-        print 'Torrent file already exist.'
+        print ('Torrent file already exist.')
         fileExist = 1
     return fileExist
 
@@ -241,6 +241,7 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 03-Aug-2016    shianchin    7      Update to Python 3.5.2
 # 20-Jul-2016    shianchin    6      Stop searching once find existing files.
 # 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
 #                                    Use requests module.
