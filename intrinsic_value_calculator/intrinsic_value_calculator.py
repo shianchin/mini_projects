@@ -70,7 +70,6 @@ def main():
     csvObj = CSV(header_list)
 
 
-
     for company in FBM_KLCI:
         try:
             incomeObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/income-statement")
@@ -78,14 +77,12 @@ def main():
             #financialsObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials")
             dictObj.writeTo("Company", company)
             calcIntrinsicValue(incomeObj, cashflowObj, dictObj)
-
             csvObj.appendToCSV(outDict)
-
             for header in header_list:
-                print "{} : {}".format(header, outDict[header])
+                print ("{} : {}".format(header, outDict[header]))
                 # print everything in order
         except IndexError:
-            print "ERROR: Data not available."
+            print ("ERROR: Data not available.")
 
 
 def getCompany(companyObj):
@@ -94,10 +91,8 @@ def getCompany(companyObj):
     company_dict = {}
     company_name = []
     company_link = []
-    #print companySoup.prettify('utf-8')
+
     for td_tag in companySoup.find_all('td'):
-        #print td_tag.contents
-        #print len(td_tag.contents)
         if td_tag.contents:
             if td_tag.contents[0].encode('utf-8') == "XKLS":
                 count+=1
@@ -170,7 +165,6 @@ def calcIntrinsicValue(incomeObj, cashflowObj, dictObj):
             #print 'Sum of DFCFn =',sum_of_DFCFn
 
     intrinsic_value = (sum_of_DFCFn + DPCF)/shares_outstanding
-    #print "Company: "+company_name
     #print "Intrinsic value = RM {0:.2f}" .format(intrinsic_value)
 
     dictObj.writeTo("Intrinsic value", intrinsic_value)
@@ -183,15 +177,10 @@ def getSharesOutstanding(incomeObj):
 def getCurrentPrice(incomeObj):
     financialsSoup = incomeObj.getSoup()
 
-    #print financialsSoup.prettify('utf-8')
     for span_tag in financialsSoup.find_all('span'):
         if span_tag.has_attr('id'):
-            #print span_tag['id']
             if span_tag['id'] == "quote_val":
-                #print span_tag
-                #print span_tag.contents[0]
                 current_price = span_tag.contents[0]
-                #print type(span_tag)
     return current_price
 
 def getShortFcfGrowthRate(incomeObj, dictObj):
@@ -224,17 +213,9 @@ def getPast5Years(toFind, webObj):
     retList_int = []
     webSoup = webObj.getSoup()
 
-    #print webSoup.prettify('utf-8')
-
     for tr_tag in webSoup.find_all('tr'):
         if tr_tag.td:
-            #print type(tr_tag.td)
-            #print tr_tag.td
-            #print tr_tag.td.contents[0]
             if tr_tag.td.contents[0] == toFind:
-                #print tr_tag.td.contents[0]
-                #print '!!!!!!!!!!!!!!!!!'
-
                 value1 = tr_tag.td.next_sibling.next_sibling.string
                 value2 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.string
                 value3 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.string
@@ -246,13 +227,12 @@ def getPast5Years(toFind, webObj):
                 #print value3
                 #print value4
                 #print value5    #5 years ago
-                #print type(unicode(value1))
 
-                retList_unicode.append(unicode(value1))
-                retList_unicode.append(unicode(value2))
-                retList_unicode.append(unicode(value3))
-                retList_unicode.append(unicode(value4))
-                retList_unicode.append(unicode(value5))
+                retList_unicode.append(value1)
+                retList_unicode.append(value2)
+                retList_unicode.append(value3)
+                retList_unicode.append(value4)
+                retList_unicode.append(value5)
 
     for u in retList_unicode:
 
@@ -274,10 +254,10 @@ class Webpage:
         self.setSoup(pageURL)
 
     def setSoup(self, pageURL):
-        print "Requesting webpage..."
+        print ("Requesting webpage...")
         r = requests.get(pageURL)
         if r.status_code == requests.codes.ok:
-            print "HTTP 200 OK"
+            print ("HTTP 200 OK")
             pageHTML = r.text.encode('utf-8')
             page_soup = BeautifulSoup(pageHTML, "html.parser")
         self.page_soup = page_soup
@@ -299,7 +279,7 @@ class ReportDict:
 class CSV:
     def __init__(self, header_list):
         self.header_list = header_list
-        with open("IntrinsicValue.csv", "wb") as f:
+        with open("IntrinsicValue.csv", "w") as f:
             for header in self.header_list:
                 # write header line
                 line = '{},'.format(header)
@@ -319,6 +299,7 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 03-Aug-2016    shianchin    2      Update to Python 3.5.2
 # 23-Jul-2016    shianchin    1      Initial creation.
 #
 #----------------------------------------------------------------------
