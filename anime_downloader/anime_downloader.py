@@ -28,7 +28,7 @@ def main():
                  r"【极影字幕社】 ★ 星之梦 planetarian",
                  r"\[澄空学园&amp;华盟字幕社\] 食戟之灵 二之皿",
                  r"【動漫國字幕組】★07月新番\[Rewrite\]\[\w\w\]\[720P\]\[簡繁外掛\]\[MKV\]",
-                 r"\[澄空学园&amp;雪飘工作室\]\[7月新番] Rewrite 第\d\d话 MP4 720p",
+                 r"\[澄空学园&amp;雪飘工作室\].* Rewrite 第\d\d话 MP4 720p",
                  ]
     DokiShows_re = [
                    r"New Game! - \d\d \(1280x720 h264 AAC\)"
@@ -244,12 +244,9 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
-<<<<<<< HEAD
-# 03-Aug-2016    shianchin    7      Update to Python 3.5.2
-=======
+# 03-Aug-2016    shianchin    8      Update to Python 3.5.2
 # 24-Jul-2016    shianchin    7      Create reObj before sending to findMatch.
 #                                    Change functions naming convention.
->>>>>>> master
 # 20-Jul-2016    shianchin    6      Stop searching once find existing files.
 # 16-Jul-2016    shianchin    5      Support Doki Fansubs. Add dryrun option.
 #                                    Use requests module.
