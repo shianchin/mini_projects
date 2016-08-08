@@ -19,6 +19,7 @@ import argparse
 import os.path
 import re
 import requests
+import subprocess
 
 def main():
     # This is a lists of regexes to be used as pattern recognition.
@@ -193,6 +194,7 @@ def report(DokiLog, DMLog):
 
 
 # This function will download a torrent file given link
+# and open the torrent file using default application
 def downloadTorrent(torr_URL, filename, logObj):
     #replace any forward slash in filename
     #append .torrent extension
@@ -209,13 +211,13 @@ def downloadTorrent(torr_URL, filename, logObj):
 
         logObj.downloaded('TRUE', filename)
         print ('Torrent DOWNLOADED')
-        fileExist = 0
+        subprocess.Popen(['start', r'C:\Users\shianchin\Downloads\\'+torr_filename], shell=True)
+        return False
 
     else:
         logObj.downloaded('FALSE', filename)
         print ('Torrent file already exist.')
-        fileExist = 1
-    return fileExist
+        return True
 
 
 class Log:
