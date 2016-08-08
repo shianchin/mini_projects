@@ -15,8 +15,12 @@
 
 
 from bs4 import BeautifulSoup
+import datetime
 import math
+import re
 import requests
+import threading
+import time
 
 def main():
     #companyObj = Webpage("http://quotes.wsj.com/company-list/country/malaysia/1")
@@ -56,6 +60,10 @@ def main():
                 "UMW",
                 "YTL"]
 
+    FBM_KLCI = ["AMBANK",
+                "ASTRO",
+                "AXIATA",
+                "DLADY"]
     #company_name = "TIMECOM"
     #company_name = "VS"
 
@@ -67,30 +75,41 @@ def main():
             "Shares outstanding","Current price","Intrinsic value"]
     dictObj = ReportDict(header_list)
     outDict = dictObj.getDict()
-    csvObj = CSV(header_list)
+    #csvObj = CSV(header_list)
 
-
+    start_time = time.time()
+    # Create and start the Thread objects.
+    myThreads = []    # a list of all the Thread objects
     for company in FBM_KLCI:
-        try:
-            incomeObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/income-statement")
-            cashflowObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/cash-flow")
-            #financialsObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials")
-            dictObj.writeTo("Company", company)
-            calcIntrinsicValue(incomeObj, cashflowObj, dictObj)
-            csvObj.appendToCSV(outDict)
-            for header in header_list:
-                print ("{} : {}".format(header, outDict[header]))
-                # print everything in order
-        except IndexError:
-            print ("ERROR: Data not available.")
+        threadObj = threading.Thread(target=startProcess, args=[company, outDict, dictObj, header_list])
+        myThreads.append(threadObj)
+        threadObj.start()
+    # Wait for all threads to end.
+    for myThread in myThreads:
+        threadObj.join()
+    print('Done.')
+    end_time = time.time()
+    delta_time = end_time - start_time
+    print ("\nTime elapsed: {}m{:.2f}s".format(int(delta_time/60), delta_time%60))
 
+def startProcess(company, outDict, dictObj, header_list):  
+    try:
+        incomeObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/income-statement")
+        cashflowObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/cash-flow")
+        #financialsObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials")
+        dictObj.writeTo("Company", company)
+        calcIntrinsicValue(incomeObj, cashflowObj, dictObj)
+        #csvObj.appendToCSV(outDict)
+        for header in header_list:
+            print ("{} : {}".format(header, outDict[header]))
+            # print everything in order
+    except IndexError:
+        print ("ERROR: Data not available.")
 
 def getCompany(companyObj):
     companySoup = companyObj.getSoup()
     count = 0
     company_dict = {}
-    company_name = []
-    company_link = []
 
     for td_tag in companySoup.find_all('td'):
         if td_tag.contents:
@@ -99,8 +118,7 @@ def getCompany(companyObj):
                 name = td_tag.previous_sibling.previous_sibling.span.string
                 link = td_tag.previous_sibling.previous_sibling.a.get('href')
                 company_dict[name] = link
-                #print count, name
-                #print count, link
+                
     return company_dict
 
 
@@ -128,7 +146,7 @@ def calcIntrinsicValue(incomeObj, cashflowObj, dictObj):
     # After the 10th year, what percent (whole number) will the company continue to
     # grow into perpetuity (recommend 3% or lower)?
     long_fcf_growth_rate = 0.03
-    shares_outstanding = getSharesOutstanding(incomeObj)    #million / thousand
+    shares_outstanding = getSharesOutstanding(incomeObj)    #NOT rounded to millions/thousands
     current_price = getCurrentPrice(incomeObj)
 
     dictObj.writeTo("Average FCF", average_fcf)
@@ -213,6 +231,16 @@ def getPast5Years(toFind, webObj):
     retList_int = []
     webSoup = webObj.getSoup()
 
+    for th_tag in webSoup.find_all('th'):
+        if th_tag.attrs:
+            if re.search(r'All values MYR Millions', th_tag.string):
+                rounding_factor = 1000000
+            elif re.search(r'All values MYR Thousands', th_tag.string):
+                rounding_factor = 1000
+            else:
+                rounding_factor = 1
+                print ("Unknown rounding factor.")
+
     for tr_tag in webSoup.find_all('tr'):
         if tr_tag.td:
             if tr_tag.td.contents[0] == toFind:
@@ -235,16 +263,13 @@ def getPast5Years(toFind, webObj):
                 retList_unicode.append(value5)
 
     for u in retList_unicode:
-
         i = u.replace(",","")   # remove comma from number
         #print i.translate("()")
         i = i.replace("(","-")  # ugly way to convert bracket number to -ve
         i = i.replace(")","")
         if i == "-":    # no data
             i = 0
-        #print "i :",i
-        #print type(i)
-        retList_int.append(float(i))  # convert to float
+        retList_int.append(float(i)*rounding_factor)  # convert to float
 
     return retList_int
 
@@ -279,7 +304,9 @@ class ReportDict:
 class CSV:
     def __init__(self, header_list):
         self.header_list = header_list
-        with open("IntrinsicValue.csv", "w") as f:
+        timenow = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        filename = "IntrinsicValue"+timenow+".csv"
+        with open(filename, "w") as f:
             for header in self.header_list:
                 # write header line
                 line = '{},'.format(header)
