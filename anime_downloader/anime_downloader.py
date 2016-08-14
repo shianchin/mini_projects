@@ -32,7 +32,7 @@ def main():
                  r"\[澄空学园&amp;雪飘工作室\].* Rewrite 第\d\d话 MP4 720p",
                  ]
     DokiShows_re = [
-                   r"New Game! - \d\d \(1280x720 h264 AAC\)"
+                   r"\[Doki\] New Game!.*\(1280.*720 h264 AAC\)"
                    ]
     DM_MAX_PAGE = 20
     DOKI_MAX_PAGE = 5
@@ -92,6 +92,7 @@ def main():
 
     ### Output summary report
     report(DokiLog, DMLog)
+    input('Press Enter to quit...')
 
 
 def findMatchDoki(homepageHTML, shows_reObj, logObj, isDryRun):
@@ -191,6 +192,7 @@ def report(DokiLog, DMLog):
             print ('\n'.join(DokiLog.dl_list))
     else:
         print ('>>> No new release.')
+
 
 
 # This function will download a torrent file given link

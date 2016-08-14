@@ -15,6 +15,7 @@
 
 
 from bs4 import BeautifulSoup
+import csv
 import datetime
 import math
 import re
@@ -27,45 +28,43 @@ def main():
     #company_dict = getCompany(companyObj)
     #for k, v in company_dict.items():
     #    print k,v
+    
     # FBM KLCI TOP 30 companies
-
-    FBM_KLCI = ["AMBANK",
-                "ASTRO",
-                "AXIATA",
-                "BAT",
-                "CIMB",
-                "DIGI",
-                "FGV",
-                "GENTING",
-                "GENM",
-                "HLBANK",
-                "HLFG",
-                "IHH",
-                "IOICORP",
-                "IOIPG",
-                "KLK",
-                "MAYBANK",
-                "MAXIS",
-                "MISC", #!!!!!!!
-                "PCHEM",
-                "PETDAG",
-                "PETGAS",
-                "PPB",
-                "PBBANK",
-                "RHBBANK",  #!!!!!!!
-                "SKPETRO",
-                "SIME",
-                "TM",
-                "TENAGA",
-                "UMW",
-                "YTL"]
-
-    FBM_KLCI = ["AMBANK",
-                "ASTRO",
-                "AXIATA",
-                "DLADY"]
-    #company_name = "TIMECOM"
-    #company_name = "VS"
+    FBM_KLCI = [ "AMBANK"
+               , "ASTRO"
+               , "AXIATA"
+               , "BAT"
+               , "CIMB"
+               , "DIGI"
+               , "FGV"
+               , "GENTING"
+               , "GENM"
+               , "HLBANK"
+               , "HLFG"
+               , "IHH"
+               , "IOICORP"
+               , "IOIPG"
+               , "KLK"
+               , "MAYBANK"
+               , "MAXIS"
+               , "MISC" #!!!!!!!
+               , "PCHEM"
+               , "PETDAG"
+               , "PETGAS"
+               , "PPB"
+               , "PBBANK"
+               , "RHBBANK"  #!!!!!!!
+               , "SKPETRO"
+               , "SIME"
+               , "TM"
+               , "TENAGA"
+               , "UMW"
+               , "YTL"]
+    
+    # FBM_KLCI = ["AMBANK",
+    #             "TIMECOM",
+    #             "VS",
+    #             "DLADY"]
 
     # Lists (for exporting to csv purpose)
     header_list = ["Company",
@@ -74,34 +73,38 @@ def main():
             "Short term duration","Discount rate","Long term growth rate",
             "Shares outstanding","Current price","Intrinsic value"]
     dictObj = ReportDict(header_list)
-    outDict = dictObj.getDict()
-    #csvObj = CSV(header_list)
+    csvObj = CSV(header_list)
 
     start_time = time.time()
+    '''
     # Create and start the Thread objects.
     myThreads = []    # a list of all the Thread objects
     for company in FBM_KLCI:
-        threadObj = threading.Thread(target=startProcess, args=[company, outDict, dictObj, header_list])
+        threadObj = threading.Thread(target=startProcess, args=[company, dictObj, header_list])
         myThreads.append(threadObj)
         threadObj.start()
     # Wait for all threads to end.
     for myThread in myThreads:
         threadObj.join()
     print('Done.')
+    '''
+    for company in FBM_KLCI:
+        startProcess(company, dictObj, header_list, csvObj)
     end_time = time.time()
     delta_time = end_time - start_time
     print ("\nTime elapsed: {}m{:.2f}s".format(int(delta_time/60), delta_time%60))
 
-def startProcess(company, outDict, dictObj, header_list):  
+def startProcess(company, dictObj, header_list, csvObj):  
     try:
-        incomeObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/income-statement")
-        cashflowObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials/annual/cash-flow")
-        #financialsObj = Webpage("http://quotes.wsj.com/MY/XKLS/"+company+"/financials")
+        url_root = "http://quotes.wsj.com/MY/XKLS/"
+        incomeObj = Webpage(url_root+company+"/financials/annual/income-statement")
+        cashflowObj = Webpage(url_root+company+"/financials/annual/cash-flow")
+        #financialsObj = Webpage(url_root+company+"/financials")
         dictObj.writeTo("Company", company)
         calcIntrinsicValue(incomeObj, cashflowObj, dictObj)
-        #csvObj.appendToCSV(outDict)
+        csvObj.appendToCSV(dictObj.getDict())
         for header in header_list:
-            print ("{} : {}".format(header, outDict[header]))
+            print ("{} : {}".format(header, dictObj.getDictValue(header)))
             # print everything in order
     except IndexError:
         print ("ERROR: Data not available.")
@@ -125,15 +128,13 @@ def getCompany(companyObj):
 def calcIntrinsicValue(incomeObj, cashflowObj, dictObj):
     #reference: http://www.buffettsbooks.com/howtoinvestinstocks/course3/intrinsic-value-formula.html
     FCF = getPast5Years("Free Cash Flow", cashflowObj)
-    dictObj.writeTo("FCF Year 2015", FCF[0])
-    dictObj.writeTo("FCF Year 2014", FCF[1])
-    dictObj.writeTo("FCF Year 2013", FCF[2])
-    dictObj.writeTo("FCF Year 2012", FCF[3])
-    dictObj.writeTo("FCF Year 2011", FCF[4])
-    #print FCF
+    dictObj.writeTo("FCF Year 2015", "RM {}".format(FCF[0]))
+    dictObj.writeTo("FCF Year 2014", "RM {}".format(FCF[1]))
+    dictObj.writeTo("FCF Year 2013", "RM {}".format(FCF[2]))
+    dictObj.writeTo("FCF Year 2012", "RM {}".format(FCF[3]))
+    dictObj.writeTo("FCF Year 2011", "RM {}".format(FCF[4]))
 
-    average_fcf = sum(FCF)/len(FCF)    #MYR million / thousand
-    #print 'Average FCF = ',average_fcf
+    average_fcf = int(sum(FCF)/len(FCF))    #MYR (NOT rounded to millions/thousands)
 
     short_fcf_growth_rate = getShortFcfGrowthRate(incomeObj, dictObj)
 
@@ -146,46 +147,33 @@ def calcIntrinsicValue(incomeObj, cashflowObj, dictObj):
     # After the 10th year, what percent (whole number) will the company continue to
     # grow into perpetuity (recommend 3% or lower)?
     long_fcf_growth_rate = 0.03
-    shares_outstanding = getSharesOutstanding(incomeObj)    #NOT rounded to millions/thousands
-    current_price = getCurrentPrice(incomeObj)
+    shares_outstanding = int(getSharesOutstanding(incomeObj))    #NOT rounded to millions/thousands
+    current_price = float(getCurrentPrice(incomeObj))
 
-    dictObj.writeTo("Average FCF", average_fcf)
-    dictObj.writeTo("FCF growth", short_fcf_growth_rate)
-    dictObj.writeTo("Short term duration", short_term)
-    dictObj.writeTo("Discount rate", discount_rate)
-    dictObj.writeTo("Long term growth rate", long_fcf_growth_rate)
-    dictObj.writeTo("Shares outstanding", shares_outstanding)
-    dictObj.writeTo("Current price", current_price)
+    dictObj.writeTo("Average FCF", "RM {}".format(average_fcf))
+    dictObj.writeTo("FCF growth", "{:.2%}".format(short_fcf_growth_rate))
+    dictObj.writeTo("Short term duration", "{} years".format(short_term))
+    dictObj.writeTo("Discount rate", "{:.2%}".format(discount_rate))
+    dictObj.writeTo("Long term growth rate", "{:.2%}".format(long_fcf_growth_rate))
+    dictObj.writeTo("Shares outstanding", "{:} shares".format(shares_outstanding))
+    dictObj.writeTo("Current price", "RM {:.2f}".format(current_price))
 
-
-    FCFn = average_fcf    # free cash flow at year N; init to average_fcf for year 0
-    sum_of_FCFn = 0
-    DFCFn = 0   # discounted free cash flow at year N
+    #DFCFn = 0   # discounted free cash flow at year N
     sum_of_DFCFn = 0
-
-    for n in range(1,12):
-        #print n
-        #print "before: ",FCFn
-        FCFn = FCFn*(1+short_fcf_growth_rate)   # find FV of FCF at year N
-        #print "after: ", FCFn
-        #print "discount rate: ", (1+discount_rate)**n
-        DFCFn = FCFn/(1+discount_rate)**n  # discount back to PV
-        if n == 11:
-            #print 'DFCFn:',DFCFn
-            #discontinued_perpetuity_cash_flow
-            DPCF = (DFCFn*(1+long_fcf_growth_rate)) / (discount_rate - long_fcf_growth_rate)
-            #print 'DPCF:',DPCF
-            DFCFn = 0   # don't add to sum
-        else:
-            sum_of_DFCFn += DFCFn
-            #print 'FCF',n,'=',FCFn
-            #print 'DFCF',n,'=',DFCFn
-            #print 'Sum of DFCFn =',sum_of_DFCFn
+    
+    # formula refers to buffettsbooks.com
+    for n in range(1,short_term+1):
+        sum_of_DFCFn += (average_fcf * (1 + short_fcf_growth_rate)**n) / (1 + discount_rate)**n
+    
+    # Discounted Free Cash Flow at (short_term + 1)
+    DFCF_last = ((average_fcf * (1 + short_fcf_growth_rate)**(short_term + 1)) / (1 + discount_rate)**(short_term + 1))
+    # Discounted Perpetuity Cash Flow
+    DPCF = DFCF_last * (1 + long_fcf_growth_rate) / (discount_rate - long_fcf_growth_rate)
 
     intrinsic_value = (sum_of_DFCFn + DPCF)/shares_outstanding
     #print "Intrinsic value = RM {0:.2f}" .format(intrinsic_value)
 
-    dictObj.writeTo("Intrinsic value", intrinsic_value)
+    dictObj.writeTo("Intrinsic value", "RM {:.2f}".format(intrinsic_value))
     # return intrinsic_value
 
 def getSharesOutstanding(incomeObj):
@@ -203,15 +191,11 @@ def getCurrentPrice(incomeObj):
 
 def getShortFcfGrowthRate(incomeObj, dictObj):
     netIncome = getPast5Years("Net Income", incomeObj)
-
-    #print "Year 2011:", netIncome[4]
-    #print "Year 2015:", netIncome[0]
-
-    dictObj.writeTo("Net Income Year 2015", netIncome[0])
-    dictObj.writeTo("Net Income Year 2014", netIncome[1])
-    dictObj.writeTo("Net Income Year 2013", netIncome[2])
-    dictObj.writeTo("Net Income Year 2012", netIncome[3])
-    dictObj.writeTo("Net Income Year 2011", netIncome[4])
+    dictObj.writeTo("Net Income Year 2015", "RM {}".format(netIncome[0]))
+    dictObj.writeTo("Net Income Year 2014", "RM {}".format(netIncome[1]))
+    dictObj.writeTo("Net Income Year 2013", "RM {}".format(netIncome[2]))
+    dictObj.writeTo("Net Income Year 2012", "RM {}".format(netIncome[3]))
+    dictObj.writeTo("Net Income Year 2011", "RM {}".format(netIncome[4]))
 
     # Equation as below. Rearrange to find short_fcf_growth_rate
     # netIncome[0] = netIncome[4]*(1+short_fcf_growth_rate)^4
@@ -221,14 +205,13 @@ def getShortFcfGrowthRate(incomeObj, dictObj):
         temp1 = math.log10(float(netIncome[0])/float(netIncome[4]))
         temp2 = temp1/4
         short_fcf_growth_rate = math.pow(10, temp2)-1
-        #print "Short term FCF growth rate: ",short_fcf_growth_rate
     else:
         short_fcf_growth_rate = 0
     return short_fcf_growth_rate
 
 def getPast5Years(toFind, webObj):
-    retList_unicode = []
-    retList_int = []
+    valList_unicode = []
+    valList_int = []
     webSoup = webObj.getSoup()
 
     for th_tag in webSoup.find_all('th'):
@@ -244,34 +227,29 @@ def getPast5Years(toFind, webObj):
     for tr_tag in webSoup.find_all('tr'):
         if tr_tag.td:
             if tr_tag.td.contents[0] == toFind:
-                value1 = tr_tag.td.next_sibling.next_sibling.string
-                value2 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.string
-                value3 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.string
-                value4 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.string
-                value5 = tr_tag.td.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.string
+                value1 = tr_tag.td.next_sibling.next_sibling    #latest
+                value2 = value1.next_sibling.next_sibling
+                value3 = value2.next_sibling.next_sibling
+                value4 = value3.next_sibling.next_sibling
+                value5 = value4.next_sibling.next_sibling       #5 years ago
 
-                #print value1    #latest
-                #print value2
-                #print value3
-                #print value4
-                #print value5    #5 years ago
+                valList_unicode.append(value1.string)
+                valList_unicode.append(value2.string)
+                valList_unicode.append(value3.string)
+                valList_unicode.append(value4.string)
+                valList_unicode.append(value5.string)
 
-                retList_unicode.append(value1)
-                retList_unicode.append(value2)
-                retList_unicode.append(value3)
-                retList_unicode.append(value4)
-                retList_unicode.append(value5)
-
-    for u in retList_unicode:
+    for u in valList_unicode:
         i = u.replace(",","")   # remove comma from number
         #print i.translate("()")
         i = i.replace("(","-")  # ugly way to convert bracket number to -ve
         i = i.replace(")","")
         if i == "-":    # no data
             i = 0
-        retList_int.append(float(i)*rounding_factor)  # convert to float
+        valList_int.append(float(i)*rounding_factor)  # convert to float
 
-    return retList_int
+    valList_int = [int(i) for i in valList_int]     # convert to int
+    return valList_int
 
 class Webpage:
     def __init__(self, pageURL):
@@ -284,8 +262,7 @@ class Webpage:
         if r.status_code == requests.codes.ok:
             print ("HTTP 200 OK")
             pageHTML = r.text.encode('utf-8')
-            page_soup = BeautifulSoup(pageHTML, "html.parser")
-        self.page_soup = page_soup
+            self.page_soup = BeautifulSoup(pageHTML, "html.parser")
 
     def getSoup(self):
         return self.page_soup
@@ -298,26 +275,28 @@ class ReportDict:
     def writeTo(self, header, value):
         self.output_dict[header] = value
 
+    def getDictValue(self, header):
+        return self.output_dict[header]
+
     def getDict(self):
         return self.output_dict
 
 class CSV:
     def __init__(self, header_list):
         self.header_list = header_list
-        timenow = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        filename = "IntrinsicValue"+timenow+".csv"
-        with open(filename, "w") as f:
-            for header in self.header_list:
-                # write header line
-                line = '{},'.format(header)
-                f.write(line)
-
+        timenow = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.filename = "IntrinsicValue"+timenow+".csv"
+        with open(self.filename, 'w', newline='') as f:
+            wr = csv.writer(f)
+            # write header line
+            wr.writerows([self.header_list])
+       
     def appendToCSV(self, outDict):
-        with open("IntrinsicValue.csv", "a") as f:
-            f.write("\n")
+        with open(self.filename, "a") as f:
             for header in self.header_list:
-                line = '{},'.format(outDict[header])
+                line = '{},'.format(outDict[header])    #use comma separator
                 f.write(line)
+            f.write("\n")
 
 if __name__ == '__main__':
     main()
@@ -326,6 +305,7 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 14-Aug-2016    shianchin    3      Tweaked intrinsic calculation algorithm.
 # 03-Aug-2016    shianchin    2      Update to Python 3.5.2
 # 23-Jul-2016    shianchin    1      Initial creation.
 #
