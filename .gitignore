@@ -40,3 +40,8 @@ Thumbs.db
 # Torrent files #
 ######################
 *.torrent
+
+# Generated files #
+######################
+auto_backup/*.txt
+intrinsic_value_calculator/*.csv
