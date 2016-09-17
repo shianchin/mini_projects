@@ -61,7 +61,7 @@ FOOD_NOT_ENOUGH = 'not_enough_food'
 def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s.%(msecs)03d: %(message)s', datefmt='%H:%M:%S')
     #logging.disable(logging.INFO) # uncomment to block info log messages
-    
+
     """Runs the entire program. The Kanpani Girls game must be visible on the screen and the PLAY button visible."""
     logging.info('Program Started. Press Ctrl-C to abort at any time.')
     logging.info('To interrupt mouse movement, move mouse to upper left corner.')
@@ -76,7 +76,7 @@ def main():
         #startMainQuests()
         #count += 1
         startHollyQuests()
-    
+
 
 
 def getGameStatus(to_find):
@@ -84,19 +84,23 @@ def getGameStatus(to_find):
     found = None
 
     if to_find == CEO_OFFICE_PAGE:
-        found = pyautogui.locateOnScreen(imgPath("CeoOffice.png"), region=GAME_REGION)
+        found = pyautogui.locateOnScreen(imgPath("CeoOffice.png")
+            , region=(GAME_REGION[0], GAME_REGION[1]+GAME_REGION[3]-115, GAME_REGION[2]+115, GAME_REGION[3]+115))
         if found: logging.info('CEO Office page...')
 
     elif to_find == CHAR_STORY_PAGE:
-        found = pyautogui.locateOnScreen(imgPath("char_story_home.png"), region=GAME_REGION)
+        found = pyautogui.locateOnScreen(imgPath("char_story_home.png")
+            , region=(GAME_REGION[0]+60, GAME_REGION[1]+95, GAME_REGION[2]+200, GAME_REGION[3]+50))
         if found: logging.info('Character Story page...')
 
     elif to_find == INTERDIMENSIONAL_GIRLS_PAGE:
-        found = pyautogui.locateOnScreen(imgPath("interdimensional_girls.png"), region=GAME_REGION)
+        found = pyautogui.locateOnScreen(imgPath("interdimensional_girls.png")
+            , region=(GAME_REGION[0]+125, GAME_REGION[1]+100, GAME_REGION[2]+130, GAME_REGION[3]+50))
         if found: logging.info('Chapter 1 - Interdimensional Girls page...')
 
     elif to_find == PLAY_PAGE:
-        found = pyautogui.locateOnScreen(imgPath("playPage.png"), region=GAME_REGION)
+        found = pyautogui.locateOnScreen(imgPath("playPage.png")
+            , region=(GAME_REGION[0]+185, GAME_REGION[1]+120, GAME_REGION[2]+80, GAME_REGION[3]+55))
         if found: logging.info('Play page...')
 
     elif to_find == EQUIP_DEV_PAGE:
@@ -108,7 +112,8 @@ def getGameStatus(to_find):
         if found: logging.info('Quest ended...')
 
     elif to_find == QUEST_ONGOING_PAGE:
-        found = pyautogui.locateOnScreen(imgPath("quest_on_going.png"), region=GAME_REGION)
+        found = pyautogui.locateOnScreen(imgPath("quest_on_going.png")
+            , region=(GAME_REGION[0]+170, GAME_REGION[1], GAME_REGION[2]+50,GAME_REGION[3]+30))
         if found: logging.info('Quest on going...')
 
     elif to_find == FOOD_NOT_ENOUGH:
@@ -123,23 +128,22 @@ def getGameStatus(to_find):
         logging.info('Unknown status...')
         pass
 
-    #elif pyautogui.locateOnScreen(imgPath("facilities.png"), region=GAME_REGION):
-    #    logging.info('Currently on Facilities page...')
-    #    CURRENT_PAGE = FACILITIES_PAGE
-
     if not found: logging.info('{} not found.'.format(to_find))
     return found
 
 def getGameRegion():
-    """Obtains the region that the Kanpani Girls game is on the screen and assigns it to GAME_REGION. 
+    """Obtains the region that the Kanpani Girls game is on the screen and assigns it to GAME_REGION.
        The game must be at the start screen (where the PLAY button is visible)."""
     global GAME_REGION
 
     # identify the CEO Office
     logging.info('Finding game region...')
     region = pyautogui.locateOnScreen(imgPath("CeoOffice.png"))
-    if region is None:
-        raise Exception('Could not find game on screen. Is the game visible?')
+    while region is None:
+        logging.info('Could not find game on screen. Is the game visible?')
+        time.sleep(5)
+        getGameRegion()
+        #raise Exception('Could not find game on screen. Is the game visible?')
 
     # calculate the region of the entire game
     bottomLeftX = region[0] # left
@@ -222,7 +226,7 @@ def developEquipments():
     #while (getCurrentPage() != FACILITIES_PAGE):
     pyautogui.click(FACILITIES_BUTTON_COORDS, duration=0.25)
     time.sleep(5)
-    
+
     logging.info('Clicked on Facilities button.')
 
     time.sleep(1)
@@ -250,22 +254,19 @@ def developEquipments():
 
     while not getGameStatus(CONTINUE_RESEARCH_PAGE):
         time.sleep(5)
-    
+
     pyautogui.click(CLOSE_COORDS, duration=0.25)
     time.sleep(2)
     pyautogui.click(TOP_LEFT_BUTTON_COORDS, duration=0.25)
 
 
 def startMainQuests():
-    """Performs the clicks to navigate from the start screen (where the PLAY button is visible) to the beginning of the first level."""
-    # Click on everything needed to get past the menus at the start of the game.
-
     # click on Play
     logging.info('Looking for Play button...')
     while not getGameStatus(PLAY_PAGE):
         pyautogui.click(PLAY_BUTTON_COORDS, duration=0.25)
         time.sleep(2)
-    
+
     logging.info('Clicked on Play button.')
 
     pyautogui.click(CHAPTER_ONE_BUTTON_COORDS, duration=0.25)
@@ -293,21 +294,28 @@ def startMainQuests():
         time.sleep(30*60)   # wait for 30 mins
         logging.info('Wakes up.')
         pyautogui.click(PARTY_BEGIN_STORY_COORDS, duration=0.25)
-    
+
 
     time.sleep(5)
-    while not getGameStatus(QUEST_ONGOING_PAGE):    # need to double check this
+    while not getGameStatus(QUEST_ONGOING_PAGE):
         time.sleep(2)
         logging.info('Quest not starting yet.')
-        
-    pyautogui.click(FAST_FORWARD_BUTTON_COORDS, duration=0.25)
-    logging.info('Clicked on Fast Forward button.')
 
-    time.sleep(2*60)    # wait 2 mins
-    while not getGameStatus(QUEST_RESULT_PAGE):
+    pyautogui.click(FAST_FORWARD_BUTTON_COORDS)
+    logging.info('Clicked on Fast Forward button.')    # no way to check if it's actually clicked
+
+    time.sleep(2*60)    # wait 3 mins
+
+    quest_running = True
+    while quest_running:
         # random mouse move to prevent screen saver
         #pyautogui.moveTo(random.randint(1, 10), random.randint(1, 10), 2)
+        pyautogui.doubleClick(FAST_FORWARD_BUTTON_COORDS)
         time.sleep(10)
+        quest_running = getGameStatus(QUEST_ONGOING_PAGE)
+        if not quest_running:
+            time.sleep(3)
+            quest_running = getGameStatus(QUEST_ONGOING_PAGE)   # check again to confirm
 
     while not getGameStatus(CEO_OFFICE_PAGE):
         pyautogui.click(CENTER_COORDS, duration=0.25)    # continue clicking until back to CEO Office
@@ -316,25 +324,22 @@ def startMainQuests():
 
 
 def startHollyQuests():
-    """Performs the clicks to navigate from the start screen (where the PLAY button is visible) to the beginning of the first level."""
-    # Click on everything needed to get past the menus at the start of the game.
-
     # click on Play
     logging.info('Looking for Play button...')
     while not getGameStatus(PLAY_PAGE):
         pyautogui.click(PLAY_BUTTON_COORDS, duration=0.25)
         time.sleep(5)
-    
+
     logging.info('Clicked on Play button.')
 
-    
+
     pyautogui.click(CHAR_STORY_COORDS, duration=0.25)
     logging.info('Clicked on Character Story button.')
 
     while not getGameStatus(CHAR_STORY_PAGE):
         time.sleep(5)
 
-    
+
     pyautogui.click(CHAR_STORY_UP_ARROW_COORDS, duration=0.25)
     logging.info('Clicked on Character Story Up button.')
 
@@ -362,17 +367,26 @@ def startHollyQuests():
         pyautogui.click(PARTY_BEGIN_STORY_COORDS, duration=0.25)
 
     time.sleep(7)
-    #while not getGameStatus(QUEST_ONGOING_PAGE):     # need to double check this
-    #    time.sleep(4)
-        
-    pyautogui.click(FAST_FORWARD_BUTTON_COORDS, duration=0.25)
-    logging.info('Clicked on Fast Forward button.')
+    while not getGameStatus(QUEST_ONGOING_PAGE):
+        time.sleep(4)
+
+    pyautogui.click(FAST_FORWARD_BUTTON_COORDS)
+    logging.info('Clicked on Fast Forward button.')    # no way to check if it's actually clicked
 
     time.sleep(4*60)    # wait 4 mins
-    while not getGameStatus(QUEST_RESULT_PAGE):
+    pyautogui.doubleClick(FAST_FORWARD_BUTTON_COORDS)   # prevent screen saver from kicking in
+    time.sleep(2*60)    # wait 2 mins
+
+    quest_running = True
+    while quest_running:
         # random mouse move to prevent screen saver
         #pyautogui.moveTo(random.randint(1, 10), random.randint(1, 10), 2)
+        pyautogui.doubleClick(FAST_FORWARD_BUTTON_COORDS)
         time.sleep(10)
+        quest_running = getGameStatus(QUEST_ONGOING_PAGE)
+        if not quest_running:
+            time.sleep(3)
+            quest_running = getGameStatus(QUEST_ONGOING_PAGE)   # check again to confirm
 
     while not getGameStatus(CEO_OFFICE_PAGE):
         pyautogui.click(CENTER_COORDS, duration=0.25)    # continue clicking until back to CEO Office
@@ -380,7 +394,7 @@ def startHollyQuests():
         time.sleep(2)
 
 def imgPath(filename):
-    """A shortcut for joining the 'images/'' file path, since it is used so often. 
+    """A shortcut for joining the 'images/'' file path, since it is used so often.
        Returns the filename with 'images/' prepended."""
     return os.path.join('images', filename)
 
@@ -392,6 +406,7 @@ if __name__ == '__main__':
 # Revision History  :
 #
 # Date           Author       Ref    Revision
+# 17-Sep-2016    shianchin    2      Improve locateOnScreen with smaller region.
 # 13-Aug-2016    shianchin    1      Initial creation.
 #
 #----------------------------------------------------------------------
