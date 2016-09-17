@@ -2,7 +2,8 @@
 Using shell script and Python to find the difference between two directories and list down file path of the diff.
 
 ##Description
-1. diff_helper.sh will diff FolderOne and FolderTwo, then list down files that only exist in FolderOne. The output will be saved in diff_raw.txt
+- diff_helper.sh will diff FolderOne and FolderTwo, then list down files that only exist in FolderOne. The output will be saved in diff_raw.txt
+
    Notes: Only .cpp, .c, and .h will be listed. All unit_test, test_double, mock and fake will be ignored.
 
 ```
@@ -16,8 +17,8 @@ FolderOne/C++/design_pattern/onetwothree/Observer.h -> ../../../../FolderTwo/Git
 FolderOne/C++/design_pattern/onetwothree/src/iwamgvsefq.cpp
 FolderOne/C++/design_pattern/onetwothree/src/iwamgvsefq.h
 ```
-
-2. diff_helper.py is used to execute diff_helper.sh and format the output into CSV.
+- diff_helper.py is used to execute diff_helper.sh and format the output into CSV.
+   
    Notes: Files under same directory are grouped together.
 ```
 FolderOne/C++/design_pattern/CH02_strategy,test.cpp
