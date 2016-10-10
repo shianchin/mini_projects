@@ -23,7 +23,7 @@ def main():
         # SUCCESS, since return code is 0
 
     old_dir = ''
-    with open('diff_raw.txt', 'r') as f:
+    with open('diff_result.txt', 'r') as f:
         for line in f:
             if re.search(r'->', line):
                 # is symlink
