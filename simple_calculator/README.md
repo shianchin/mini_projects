@@ -16,9 +16,13 @@ The internal representation of a Polynomial is an array of terms. Each term cont
 ##Capabilities
 
 a) The addition operator (+) to add two Polynomials.
+
 b) The subtraction operator (-) to subtract two Polynomials.
+
 c) The assignment operator to assign one Polynomial to another.
+
 d) The addition assignment operator (+=) and subtraction assignment operator (-=).
+
 e) Able to accept input of the variable to calculate the overall value of the equation.
 
 ##Program Output
