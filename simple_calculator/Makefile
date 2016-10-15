@@ -2,10 +2,9 @@ CPP=g++
 EXE=Calculator
 SRC=\
 	Calculator.cpp \
-    Formula.cpp \
-    InsertIntoArray.cpp
-
-	#EquationParser.cpp \
+	EquationParser.cpp \
+	Formula.cpp \
+	Polynomial.cpp \
 
 .PHONY: all
 all: $(EXE) run

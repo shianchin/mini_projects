@@ -14,25 +14,23 @@
 #ifndef EQUATION_PARSER_H
 #define EQUATION_PARSER_H
 
-#include "Formula.h"
-#include "InsertIntoArray.h"
+#include <string>
+
 class EquationParser
 {
 public:
-    EquationParser(Formula * SaveLoadFormulaPtr);
+    EquationParser();
     ~EquationParser();
-    void parseFormulaExpr();
-
+    void parseFormulaExpr(std::string eq);
 private:
-    Formula * m_SaveLoadFormulaPtr;
-    InsertIntoArray * m_InsertIntoArrayPtr;
     char * expressionToParse;
     char peek();
     char get();
-    int number();
-    int factor();
-    int term();
-    int expression();
+    double decimal();
+    double number();
+    double factor();
+    double term();
+    double expression();
 };
 
 #endif

@@ -65,20 +65,6 @@ bool Formula::loadFromFile(void)
                 i++;
             }
             lineNum++;
-
-            //char c_FormulaExpr[s_FormulaExpr.size()+1];  // plus null
-            //strcpy(c_FormulaExpr, s_FormulaExpr.c_str());
-
-            //char* c_FormulaExpr = (char*)s_FormulaExpr;
-            /*for (int i = 0; c_FormulaExpr[i] != '\0'; i++)
-            {
-                if ( (int)c_FormulaExpr[i] == ',')
-                {
-                    cout << "Found comma" << i;
-                    mymap[c_FormulaExpr[0]] = c_FormulaExpr[i+1];
-                }
-            }*/
-
         }
         myfile.close();
         isFileExist = true;
@@ -100,3 +86,12 @@ string Formula::getEquation(int index)
 {
     return m_formulae[index].equation;
 }
+
+
+//----------------------------------------------------------------------
+// Revision History  :
+//
+// Date           Author       Ref    Revision
+// 15-Oct-2016    shianchin    1      Initial creation.
+//
+//----------------------------------------------------------------------

@@ -12,21 +12,24 @@
 //----------------------------------------------------------------------
 
 #include <iostream>
-#include <iterator>
 #include "Formula.h"
-//#include "CalculateEquation.h"
+#include "EquationParser.h"
+#include "Polynomial.h"
 
 using namespace std;
 
-void function_1();
+void userDefinedFormula(void);
 void loadFormula(void);
+void parseFormula(string equation);
 void addFormula(void);
+void handlePolynomials(void);
 
 int main()
 {
     int userOption = 0;
 
-    do{
+    while (userOption != 5)
+    {
         cout << "\nPlease choose an option.."
              << "\n 1 - Use calculator with user input"
              << "\n 2 - Use calculator with loaded formula"
@@ -41,7 +44,7 @@ int main()
         switch (userOption)
         {
             case 1:
-                function_1();  // TODO
+                userDefinedFormula();
                 break;
             case 2:
                 loadFormula();
@@ -50,30 +53,34 @@ int main()
                 addFormula();
                 break;
             case 4:
-                cout << "case 4";  // TODO
+                handlePolynomials();
                 break;
             case 5:
+                // exit
                 break;
             default:
                 cout << "Invalid operation. Please try again.\n";
                 break;
         }
-    } while (userOption != 5);
+    }
 
     return 0;
 }
 
-void function_1()
+void userDefinedFormula()
 {
-    cout << "***************************************************************\n"
-         << "*  Equation variables can be anything from a to z or A to Z.  *\n"
-         << "*  All objects of the equation must be separated by [space].  *\n"
-         << "*  e.g. '2 pow r * pi - 10'.                                  *\n"
-         << "***************************************************************\n"
-         << "\nEnter your equation: ";
+    cout << "*******************************************************************\n"
+         << "*  Equation variables can be anything from a to z or A to Z.      *\n"
+         << "*  All objects of the equation must NOT be separated by [space].  *\n"
+         << "*  e.g. '2 pow r * pi - 10'. TODO:update description              *\n"
+         << "*******************************************************************\n"
+         << "\nInput equation : ";
+    string eq;
+    cin >> eq;
+    parseFormula(eq);
 }
 
-void loadFormula()
+void loadFormula(void)
 {
     Formula formula;
     if (formula.loadFromFile())
@@ -81,9 +88,11 @@ void loadFormula()
         cout << "Formulas loaded from file\n";
         cout << "Please choose an option..\n";
 
+        int maxFormula = 0;
         for(int i = 0; !formula.getName(i).empty(); i++ )
         {
             cout << (i+1) << ") "<< formula.getName(i) << endl;
+            maxFormula = i;
         }
 
         cout << "Option = ";
@@ -91,8 +100,23 @@ void loadFormula()
         int userOption = 0;
         cin >> userOption;
         cout << endl;
-        cout << "The original equation is : " << formula.getEquation(userOption-1) << endl;
+        if( userOption > 0 && userOption <= (maxFormula+1) )
+        {
+            string eq = formula.getEquation(userOption-1);
+            parseFormula(eq);
+        }
+        else
+        {
+            cout << "Option out of range. Please re-input.\n";
+            loadFormula();
+        }
     }
+}
+
+void parseFormula(string equation)
+{
+    EquationParser parser;
+    parser.parseFormulaExpr(equation);
 }
 
 void addFormula(void)
@@ -108,6 +132,11 @@ void addFormula(void)
     cin >> equation;
 
     formula.writeToFile(fName, equation);
+}
+
+void handlePolynomials(void)
+{
+    Polynomial poly;
 }
 
 

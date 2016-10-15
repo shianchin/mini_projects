@@ -12,61 +12,50 @@
 //----------------------------------------------------------------------
 
 #include "EquationParser.h"
-#include "Formula.h"
-#include "InsertIntoArray.h"
 #include <iostream>
+#include <string.h>
 using namespace std;
 
-EquationParser::EquationParser(Formula * SaveLoadFormulaPtr)
+EquationParser::EquationParser()
 {
-    m_SaveLoadFormulaPtr = SaveLoadFormulaPtr;
-    cout << "....DEBUG::CalculateEquationCtor\n";
 }
 
 EquationParser::~EquationParser()
 {
-    cout << "....DEBUG::CalculateEquationDtor\n";
 }
 
-void EquationParser::parseFormulaExpr()
+void EquationParser::parseFormulaExpr(string eq)
 {
-    cout << "....DEBUG::Entering parseFormulaExpr\n";
+    cout << "\nThe original equation is : " << eq << endl;
 
-    expressionToParse = m_SaveLoadFormulaPtr->getFormulaExpr();
-
-    for (int i = 0; expressionToParse[i] != '\0'; i++)
-        cout << "....DEBUG::expressionToParse [" << i << "] = " << expressionToParse[i] << endl;
-
-
-    //Getting input for variables
-    for (int i = 0; expressionToParse[i] != '\0'; i++)
+    size_t f = eq.find("pi");
+    if (f!=string::npos)
     {
-        if ( ((int)expressionToParse[i] >= 65 && (int)expressionToParse[i] <= 90) ||
-             ((int)expressionToParse[i] >= 97 && (int)expressionToParse[i] <= 122)   )    //A to Z and a to z
-        {
-            cout << "Please input value for variable " << expressionToParse[i] << " : ";
-            char input_temp[10];
-			cin >> input_temp[0];
-
-            int x[5]={0, 1, 2, 3, 4};
-            m_InsertIntoArrayPtr = new InsertIntoArray(x,3,7,5);
-            //int* z = m_InsertIntoArrayPtr->insertValue(x,3,7,5);
-            cout << "....DEBUG::input_temp = " << input_temp << endl;
-            //cout << "....DEBUG::z = " << z << endl;
-            //cin >> expressionToParse[i];
-            //delete[] z;
-            delete m_InsertIntoArrayPtr;
-        }
+        eq.replace(f, string("pi").length(), "3.14");  //3.14159
     }
 
-    for (int i = 0; expressionToParse[i] != '\0'; i++)
-        cout << "....DEBUG::expressionToParse [" << i << "] = " << expressionToParse[i] << endl;
+    //Getting input for variables
+    size_t found = eq.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    while (found!=string::npos)
+    {
+        cout << "Please input value for variable " << eq[found] << " : ";
+        string val;
+        cin >> val;
+        eq.replace(found, string(val).length(), val);
+        found = eq.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",found+1);
+    }
 
-    int result = expression();
-    cout << "result = " << result << endl;
+    // convert string to char*
+    char c_eq[eq.size()+1];  // plus null
+    strcpy(c_eq, eq.c_str());
+    expressionToParse = c_eq;
+
+    double result = expression();
+
+    cout << "\n  " << eq << " = " << result << endl;
 }
 
-// Below codes are recursive descent parser copied from internet.
+// Below codes are recursive descent parser mostly copied from internet.
 char EquationParser::peek()
 {
     return *expressionToParse;
@@ -77,19 +66,37 @@ char EquationParser::get()
     return *expressionToParse++;
 }
 
-int EquationParser::number()
+double EquationParser::decimal()
 {
-    int result = get() - '0';
+    // TODO: Handle more than 2 decimal places
+    double result = get() - '0';
+
+    while (peek() >= '0' && peek() <= '9')
+    {
+        result = result/10.0 + (get() - '0')/100.0;
+    }
+    return result;
+}
+
+double EquationParser::number()
+{
+    double result = get() - '0';
 
     while (peek() >= '0' && peek() <= '9')
     {
         result = 10*result + get() - '0';
     }
 
+    if (peek() == '.')
+    {
+        get();
+        result = result + decimal();
+    }
+
     return result;
 }
 
-int EquationParser::factor()
+double EquationParser::factor()
 {
     if (peek() >= '0' && peek() <= '9')
     {
@@ -98,7 +105,7 @@ int EquationParser::factor()
     else if (peek() == '(')
     {
         get(); // '('
-        int result = expression();
+        double result = expression();
         get(); // ')'
         return result;
     }
@@ -111,9 +118,9 @@ int EquationParser::factor()
     return 0; // error
 }
 
-int EquationParser::term()
+double EquationParser::term()
 {
-    int result = factor();
+    double result = factor();
 
     while (peek() == '*' || peek() == '/')
     {
@@ -126,9 +133,9 @@ int EquationParser::term()
     return result;
 }
 
-int EquationParser::expression()
+double EquationParser::expression()
 {
-    int result = term();
+    double result = term();
 
     while (peek() == '+' || peek() == '-')
     {
@@ -140,3 +147,12 @@ int EquationParser::expression()
 
     return result;
 }
+
+
+//----------------------------------------------------------------------
+// Revision History  :
+//
+// Date           Author       Ref    Revision
+// 15-Oct-2016    shianchin    1      Initial creation.
+//
+//----------------------------------------------------------------------
