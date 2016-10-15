@@ -1,1 +1,8 @@
+test
 a*b+3
+test2
+c*d-2
+test3
+1+2+k
+test4
+4b*8

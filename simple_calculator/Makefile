@@ -1,31 +1,22 @@
-CPP      = g++.exe
-OBJ      = calculator_main.o \
-           InsertIntoArray.o \
-           CalculateEquation.o\
-           SaveLoadFormula.o
-INCS     = CalculateEquation.cpp \
-           SaveLoadFormula.cpp \
-           InsertIntoArray.cpp
-BIN      = calculator_main.exe
-RM       = rm.exe -f
+CPP=g++
+EXE=Calculator
+SRC=\
+	Calculator.cpp \
+    Formula.cpp \
+    InsertIntoArray.cpp
 
-$(BIN): $(OBJ)
-	$(CPP) calculator_main.o -o calculator_main.exe $(INCS)
+	#EquationParser.cpp \
 
-calculator_main.o : calculator_main.cpp
-	$(CPP) -c calculator_main.cpp -o calculator_main.o
+.PHONY: all
+all: $(EXE) run
 
-InsertIntoArray.o : InsertIntoArray.cpp
-	$(CPP) -c InsertIntoArray.cpp -o InsertIntoArray.o
+$(EXE): $(SRC)
+	$(CPP) $(SRC) -o $(EXE)
 
-CalculateEquation.o : CalculateEquation.cpp InsertIntoArray.cpp
-	$(CPP) -c CalculateEquation.cpp -o CalculateEquation.o 
+.PHONY: run
+run:
+	./$(EXE)
 
-SaveLoadFormula.o : SaveLoadFormula.cpp
-	$(CPP) -c SaveLoadFormula.cpp -o SaveLoadFormula.o
-
-
-
-.PHONY : clean
-clean :
-		${RM} $(OBJ) $(BIN)
+.PHONY: clean
+clean:
+	rm -f $(EXE)
