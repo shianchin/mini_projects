@@ -80,8 +80,6 @@ bool Formula::loadFromFile(void)
             }*/
 
         }
-
-        cout << endl;
         myfile.close();
         isFileExist = true;
     }
