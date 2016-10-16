@@ -11,6 +11,7 @@ The customizable calculator must be able to perform the following functions:
 
 
 The calculator should also handle Polynomial Calculation as follows:
+
 The internal representation of a Polynomial is an array of terms. Each term contains a coefficient and an exponent. The term has the coefficient 2 and the exponent 4.
 
 ##Capabilities
@@ -25,7 +26,7 @@ d) The addition assignment operator (+=) and subtraction assignment operator (-=
 
 e) Able to accept input of the variable to calculate the overall value of the equation.
 
-##Program Output
+##Program Output 1
 ```
 Please choose an option..
  1 - Use calculator with user input
@@ -63,4 +64,54 @@ Please choose an option..
 Option = 1
 
 The original equation is : 2*pi*r
+```
+##Program Output 2
+```
+Please choose an option..
+ 1 - Use calculator with user input
+ 2 - Use calculator with loaded formula
+ 3 - Add new formula to file
+ 4 - Polynomials calculation
+ 5 - Exit
+Option = 4
+
+Enter number of polynomial terms (max 10): 3
+
+Enter coefficient: 12
+Enter exponent: 1
+
+Enter coefficient: 4
+Enter exponent: 2
+
+Enter coefficient: 6
+Enter exponent: 3
+
+> Polynomial entered success!
+Enter number of polynomial terms (max 10): 3
+
+Enter coefficient: -5
+Enter exponent: 1
+
+Enter coefficient: 3
+Enter exponent: 2
+
+Enter coefficient: 1
+Enter exponent: 3
+
+> Polynomial entered success!
+1st polynomial is:
+12x+4x^2+6x^3
+
+2nd polynomial is:
+-5x+3x^2+1x^3
+
+Adding the polynomials yields:
+7x+7x^2+7x^3
+
+Subtracting the polynomials yields:
+17x+1x^2+5x^3
+
+Enter the value of x: 2
+7x+7x^2+7x^3 = 98
+17x+1x^2+5x^3 = 78
 ```

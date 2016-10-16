@@ -23,10 +23,10 @@ public:
     ~EquationParser();
     void parseFormulaExpr(std::string eq);
 private:
-    char * expressionToParse;
+    char* expressionToParse;
     char peek();
     char get();
-    double decimal();
+    double floating();
     double number();
     double factor();
     double term();

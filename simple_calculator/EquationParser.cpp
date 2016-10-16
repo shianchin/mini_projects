@@ -13,7 +13,7 @@
 
 #include "EquationParser.h"
 #include <iostream>
-#include <string.h>
+#include <string.h>  // Bash on Ubuntu on Windows is weirding out
 using namespace std;
 
 EquationParser::EquationParser()
@@ -66,7 +66,9 @@ char EquationParser::get()
     return *expressionToParse++;
 }
 
-double EquationParser::decimal()
+// TODO: Handle exponent
+
+double EquationParser::floating()
 {
     // TODO: Handle more than 2 decimal places
     double result = get() - '0';
@@ -90,7 +92,7 @@ double EquationParser::number()
     if (peek() == '.')
     {
         get();
-        result = result + decimal();
+        result = result + floating();
     }
 
     return result;

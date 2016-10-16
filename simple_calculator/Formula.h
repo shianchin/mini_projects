@@ -17,11 +17,6 @@
 #include <string>
 using namespace std;
 
-typedef struct
-{
-    string fName;
-    string equation;
-} formula_t;
 
 class Formula
 {
@@ -33,6 +28,11 @@ public:
     string getName(int index);
     string getEquation(int index);
 private:
+    struct formula_t
+    {
+        string fName;
+        string equation;
+    };
     formula_t m_formulae[10];  // room for 10 equations
 };
 

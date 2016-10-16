@@ -12,8 +12,8 @@
 //----------------------------------------------------------------------
 
 #include <iostream>
-#include "Formula.h"
 #include "EquationParser.h"
+#include "Formula.h"
 #include "Polynomial.h"
 
 using namespace std;
@@ -72,9 +72,9 @@ void userDefinedFormula()
     cout << "*******************************************************************\n"
          << "*  Equation variables can be anything from a to z or A to Z.      *\n"
          << "*  All objects of the equation must NOT be separated by [space].  *\n"
-         << "*  e.g. '2 pow r * pi - 10'. TODO:update description              *\n"
+         << "*  e.g. '2*pi*r-10'.                                              *\n"
          << "*******************************************************************\n"
-         << "\nInput equation : ";
+         << "\nInput equation : ";  // TODO:update description
     string eq;
     cin >> eq;
     parseFormula(eq);
@@ -136,7 +136,32 @@ void addFormula(void)
 
 void handlePolynomials(void)
 {
-    Polynomial poly;
+    Polynomial poly1;
+    Polynomial poly2;
+    Polynomial poly3;
+    Polynomial poly4;
+    poly1.setPoly();
+    poly2.setPoly();
+
+    cout << "1st polynomial is: " << endl;
+    cout << poly1 << endl;
+    cout << "\n2nd polynomial is: " << endl;
+    cout << poly2 << endl;
+
+    poly3 = poly1 + poly2;
+    cout << "\nAdding the polynomials yields: " << endl;
+    cout << poly3 << endl;
+
+    poly4 = poly1 - poly2;
+    cout << "\nSubtracting the polynomials yields: " << endl;
+    cout << poly4 << endl;
+
+    double x = 0;
+    cout << "\nEnter the value of x: ";
+    cin >> x;
+    cout << poly3 << " = " << poly3.calculate(x) << endl;
+    cout << poly4 << " = " << poly4.calculate(x) << endl;
+
 }
 
 
