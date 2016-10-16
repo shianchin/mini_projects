@@ -12,7 +12,7 @@ The customizable calculator must be able to perform the following functions:
 
 The calculator should also handle Polynomial Calculation as follows:
 
-The internal representation of a Polynomial is an array of terms. Each term contains a coefficient and an exponent. The term has the coefficient 2 and the exponent 4.
+The internal representation of a Polynomial is an array of terms. Each term contains a coefficient and an exponent. The term 2x<sup>4</sup> has the coefficient 2 and the exponent 4.
 
 ##Capabilities
 
