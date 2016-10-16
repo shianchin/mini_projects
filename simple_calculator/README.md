@@ -73,6 +73,31 @@ Please choose an option..
  3 - Add new formula to file
  4 - Polynomials calculation
  5 - Exit
+Option = 1
+
+*******************************************************************
+*  Equation variables can be anything from a to z or A to Z.      *
+*  All objects of the equation must NOT be separated by [space].  *
+*  e.g. '2*pi*r-10'.                                              *
+*******************************************************************
+
+Input equation : 2*pi*x+b-Z
+
+The original equation is : 2*pi*x+b-Z
+Please input value for variable x : 3
+Please input value for variable b : 5
+Please input value for variable Z : 75
+
+  2*3.14*3+5-75 = -51.16
+```
+##Program Output 3
+```
+Please choose an option..
+ 1 - Use calculator with user input
+ 2 - Use calculator with loaded formula
+ 3 - Add new formula to file
+ 4 - Polynomials calculation
+ 5 - Exit
 Option = 4
 
 Enter number of polynomial terms (max 10): 3
